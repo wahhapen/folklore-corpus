@@ -1,4 +1,5 @@
 node_modules/
+build/
 coverage/
 __pycache__/
 *.py[cod]

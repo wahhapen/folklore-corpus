@@ -15,12 +15,21 @@ multi-source database is designed.
 ```bash
 npm install
 npm run build:corpus
+npm run db:build
 npm run validate
 ```
 
 The canonical release is under
 `data/derived/releases/corpus-v0.1.0/`. See `docs/dataset-card-v0.1.md` and
 `docs/identity-policy.md` before consuming it.
+
+`npm run db:build` creates a persistent embedded PostgreSQL catalogue and
+content-addressed Artifact store under `build/catalogue-v0.1.0/`. Re-running it
+is idempotent. Pass another output location with:
+
+```bash
+npm run db:build -- --output /path/to/catalogue
+```
 
 ## Database direction
 

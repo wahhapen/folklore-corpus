@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build:corpus": "node scripts/build-folklore-corpus.mjs",
+    "db:build": "node scripts/build-catalogue.mjs",
     "audit:seed": "node scripts/audit-seed-corpus.mjs",
     "validate:release": "node scripts/validate-corpus-release.mjs",
     "test": "vitest run",
