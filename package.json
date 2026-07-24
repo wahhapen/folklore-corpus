@@ -1,0 +1,20 @@
+{
+  "name": "folklore-corpus",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "build:corpus": "node scripts/build-folklore-corpus.mjs",
+    "audit:seed": "node scripts/audit-seed-corpus.mjs",
+    "validate:release": "node scripts/validate-corpus-release.mjs",
+    "test": "vitest run",
+    "validate": "npm run build:corpus && npm run audit:seed && npm run validate:release && npm test"
+  },
+  "devDependencies": {
+    "ajv": "8.17.1",
+    "vitest": "4.1.10"
+  }
+}

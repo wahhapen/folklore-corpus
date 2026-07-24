@@ -1,0 +1,36 @@
+{
+  "capturedAt": "2026-07-24",
+  "source": "Project Gutenberg texts mirrored by GITenberg",
+  "entries": [
+    {
+      "file": "andersen-1597.txt",
+      "sha256": "d7a1cc952edbbd27e6c78931416d14dd25755cf5d9b7add01cf86b4417cd96a2",
+      "byteLength": 324890,
+      "sourceUrl": "https://github.com/GITenberg/Andersen-s-Fairy-Tales_1597/blob/master/1597.txt"
+    },
+    {
+      "file": "celtic-7885.txt",
+      "sha256": "6d8df0f35e37fb27599ef21b5d8da199efa8e8b0064bf0b77c88f9fd6edec74f",
+      "byteLength": 422196,
+      "sourceUrl": "https://github.com/GITenberg/Celtic-Fairy-Tales_7885/blob/master/7885.txt"
+    },
+    {
+      "file": "english-7439.txt",
+      "sha256": "cca3f559bec328bdd0e3a923cf4fe0c40140bed97e45b0a5b60af36caa2aa4c7",
+      "byteLength": 350289,
+      "sourceUrl": "https://github.com/GITenberg/English-Fairy-Tales_7439/blob/master/7439.txt"
+    },
+    {
+      "file": "grimms-2591.txt",
+      "sha256": "8ade9aa3b46666387eff9703a32faf14c9bf7a79c787207cfe5fa59fd4c2c8fd",
+      "byteLength": 549774,
+      "sourceUrl": "https://github.com/GITenberg/Grimms-Fairy-Tales_2591/blob/master/2591.txt"
+    },
+    {
+      "file": "japanese-4018.txt",
+      "sha256": "7f973bfeb4a058bf7e5bd5d61a8fbd9e2eab4b05667b218f5d282bcd185575f0",
+      "byteLength": 399524,
+      "sourceUrl": "https://github.com/GITenberg/Japanese-Fairy-Tales_4018/blob/master/4018.txt"
+    }
+  ]
+}

@@ -1,0 +1,224 @@
+{
+  "schema": "folklore-seed-audit-v1",
+  "auditDate": "2026-07-24",
+  "corpusSchema": "atlas-story-v1",
+  "corpusChecksum": "99ec98dbf99a392d79b0d4e37a8ecf9a90942dd2aca804301c67bda6f2271e6f",
+  "summary": {
+    "rawEditionCount": 5,
+    "emittedStoryCount": 170,
+    "emittedCollectionCount": 5,
+    "totalWords": 337379,
+    "languages": [
+      "English"
+    ],
+    "exactNormalizedTextDuplicateGroupCount": 0,
+    "repeatedNormalizedTitleGroupCount": 0,
+    "currentIdsContainingMutableTitleSlug": 169,
+    "recordsWithStablePassageIds": 0,
+    "recordsWithReleaseSplitAssignment": 0
+  },
+  "collectionAudits": [
+    {
+      "collectionId": "grimm-2591",
+      "sourceKind": "historical literary collection and translation",
+      "rawFile": "data/raw/gutenberg/grimms-2591.txt",
+      "rawSha256": "8ade9aa3b46666387eff9703a32faf14c9bf7a79c787207cfe5fa59fd4c2c8fd",
+      "rawByteLength": 549774,
+      "sourceUrl": "https://github.com/GITenberg/Grimms-Fairy-Tales_2591/blob/master/2591.txt",
+      "projectGutenbergStartMarkers": 1,
+      "projectGutenbergEndMarkers": 1,
+      "tocEntryCount": 64,
+      "uniqueTocEntryCount": 64,
+      "locatedBodyHeadingCount": 64,
+      "currentLengthGateCount": 63,
+      "emittedCount": 62,
+      "omittedOrShortEntries": [
+        {
+          "title": "THE WEDDING OF MRS FOX",
+          "characterCount": 0
+        }
+      ],
+      "tocTitlesNotLocatedInBody": [],
+      "repeatedTocTitles": [],
+      "repeatedEmittedTitles": [],
+      "firstEmittedTitle": "The Golden Bird",
+      "lastEmittedTitle": "Snow-White And Rose-Red",
+      "wordCounts": {
+        "minimum": 249,
+        "median": 1469,
+        "p90": 2527,
+        "maximum": 3780,
+        "total": 100439
+      },
+      "emittedTextContainsGutenbergFooter": false
+    },
+    {
+      "collectionId": "andersen-1597",
+      "sourceKind": "authored literary fairy tales in English translation",
+      "rawFile": "data/raw/gutenberg/andersen-1597.txt",
+      "rawSha256": "d7a1cc952edbbd27e6c78931416d14dd25755cf5d9b7add01cf86b4417cd96a2",
+      "rawByteLength": 324890,
+      "sourceUrl": "https://github.com/GITenberg/Andersen-s-Fairy-Tales_1597/blob/master/1597.txt",
+      "projectGutenbergStartMarkers": 1,
+      "projectGutenbergEndMarkers": 1,
+      "tocEntryCount": 18,
+      "uniqueTocEntryCount": 18,
+      "locatedBodyHeadingCount": 18,
+      "currentLengthGateCount": 18,
+      "emittedCount": 18,
+      "omittedOrShortEntries": [],
+      "tocTitlesNotLocatedInBody": [],
+      "repeatedTocTitles": [],
+      "repeatedEmittedTitles": [],
+      "firstEmittedTitle": "The Emperor's New Clothes",
+      "lastEmittedTitle": "The Red Shoes",
+      "wordCounts": {
+        "minimum": 411,
+        "median": 1891,
+        "p90": 4964,
+        "maximum": 12640,
+        "total": 55294
+      },
+      "emittedTextContainsGutenbergFooter": false
+    },
+    {
+      "collectionId": "english-7439",
+      "sourceKind": "traditional tales selected and edited by Joseph Jacobs",
+      "rawFile": "data/raw/gutenberg/english-7439.txt",
+      "rawSha256": "cca3f559bec328bdd0e3a923cf4fe0c40140bed97e45b0a5b60af36caa2aa4c7",
+      "rawByteLength": 350289,
+      "sourceUrl": "https://github.com/GITenberg/English-Fairy-Tales_7439/blob/master/7439.txt",
+      "projectGutenbergStartMarkers": 1,
+      "projectGutenbergEndMarkers": 1,
+      "tocEntryCount": 43,
+      "uniqueTocEntryCount": 43,
+      "locatedBodyHeadingCount": 43,
+      "currentLengthGateCount": 43,
+      "emittedCount": 43,
+      "omittedOrShortEntries": [],
+      "tocTitlesNotLocatedInBody": [],
+      "repeatedTocTitles": [],
+      "repeatedEmittedTitles": [],
+      "firstEmittedTitle": "Tom Tit Tot",
+      "lastEmittedTitle": "The Three Heads Of The Well",
+      "wordCounts": {
+        "minimum": 261,
+        "median": 1031,
+        "p90": 1875,
+        "maximum": 3973,
+        "total": 50999
+      },
+      "emittedTextContainsGutenbergFooter": false
+    },
+    {
+      "collectionId": "celtic-7885",
+      "sourceKind": "mixed Irish, Scottish, and Welsh tales selected by Joseph Jacobs",
+      "rawFile": "data/raw/gutenberg/celtic-7885.txt",
+      "rawSha256": "6d8df0f35e37fb27599ef21b5d8da199efa8e8b0064bf0b77c88f9fd6edec74f",
+      "rawByteLength": 422196,
+      "sourceUrl": "https://github.com/GITenberg/Celtic-Fairy-Tales_7885/blob/master/7885.txt",
+      "projectGutenbergStartMarkers": 1,
+      "projectGutenbergEndMarkers": 1,
+      "tocEntryCount": 26,
+      "uniqueTocEntryCount": 26,
+      "locatedBodyHeadingCount": 25,
+      "currentLengthGateCount": 25,
+      "emittedCount": 26,
+      "omittedOrShortEntries": [],
+      "tocTitlesNotLocatedInBody": [
+        "CONAL YELLOWCLAW"
+      ],
+      "repeatedTocTitles": [],
+      "repeatedEmittedTitles": [],
+      "firstEmittedTitle": "Connla And The Fairy Maiden",
+      "lastEmittedTitle": "The Lad With The Goat-Skin",
+      "wordCounts": {
+        "minimum": 458,
+        "median": 2214,
+        "p90": 4311,
+        "maximum": 5984,
+        "total": 60698
+      },
+      "emittedTextContainsGutenbergFooter": false
+    },
+    {
+      "collectionId": "japanese-4018",
+      "sourceKind": "Japanese tales compiled and translated by Yei Theodora Ozaki",
+      "rawFile": "data/raw/gutenberg/japanese-4018.txt",
+      "rawSha256": "7f973bfeb4a058bf7e5bd5d61a8fbd9e2eab4b05667b218f5d282bcd185575f0",
+      "rawByteLength": 399524,
+      "sourceUrl": "https://github.com/GITenberg/Japanese-Fairy-Tales_4018/blob/master/4018.txt",
+      "projectGutenbergStartMarkers": 1,
+      "projectGutenbergEndMarkers": 1,
+      "tocEntryCount": 21,
+      "uniqueTocEntryCount": 21,
+      "locatedBodyHeadingCount": 21,
+      "currentLengthGateCount": 21,
+      "emittedCount": 21,
+      "omittedOrShortEntries": [],
+      "tocTitlesNotLocatedInBody": [],
+      "repeatedTocTitles": [],
+      "repeatedEmittedTitles": [],
+      "firstEmittedTitle": "My Lord Bag Of Rice",
+      "lastEmittedTitle": "The Stones Of Five Colors And The Empress Jokwa",
+      "wordCounts": {
+        "minimum": 931,
+        "median": 3033,
+        "p90": 5295,
+        "maximum": 6273,
+        "total": 69949
+      },
+      "emittedTextContainsGutenbergFooter": false
+    }
+  ],
+  "duplicateEvidence": {
+    "exactNormalizedTextGroups": [],
+    "repeatedTitlesAcrossCorpus": []
+  },
+  "fieldSuitability": [
+    {
+      "field": "id",
+      "safeUse": "temporary application identity only",
+      "unsafeUse": "durable cross-release identity",
+      "reason": "The identifier contains entry order and a mutable normalized title slug."
+    },
+    {
+      "field": "text",
+      "safeUse": "model input and readable witness after source-boundary review",
+      "unsafeUse": "source-language or oral-performance evidence",
+      "reason": "All current texts are English historical editions or translations/retellings."
+    },
+    {
+      "field": "collectionId",
+      "safeUse": "grouping, held-out diagnostics, and source-slice reporting",
+      "unsafeUse": "a folklore class target",
+      "reason": "It identifies one edition and leaks editor, translator, and writing style."
+    },
+    {
+      "field": "tradition and region",
+      "safeUse": "display and coarse diagnostic slicing",
+      "unsafeUse": "precise cultural, national, or geographic gold labels",
+      "reason": "Values are collection-wide editorial descriptions, sometimes intentionally broad."
+    },
+    {
+      "field": "motifs, beings, and roles",
+      "safeUse": "rule-derived navigation suggestions and weak-label diagnostics",
+      "unsafeUse": "gold labels for supervised evaluation",
+      "reason": "They are generated from regexes over the same story text a model would receive."
+    },
+    {
+      "field": "source",
+      "safeUse": "locating the catalog item and current raw file",
+      "unsafeUse": "complete capture-to-passage provenance",
+      "reason": "It lacks capture identity, upstream revision, derivation events, and passage offsets."
+    }
+  ],
+  "blockingFindings": [
+    "Current story IDs are not durable because mutable title slugs are embedded in them.",
+    "The five inputs are English editions; this is not yet a multilingual dataset.",
+    "The output has no Source/Edition/Document/Witness/Passage identity hierarchy.",
+    "The output has no passage-level citations or task-specific split manifests.",
+    "Regex-derived concept suggestions cannot be treated as supervised gold labels.",
+    "The raw manifest identifies mirror URLs but not an upstream revision or per-capture directory."
+  ]
+}
