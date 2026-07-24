@@ -16,6 +16,7 @@ multi-source database is designed.
 npm install
 npm run build:corpus
 npm run db:build
+npm run release:pack
 npm run validate
 ```
 
@@ -29,6 +30,13 @@ is idempotent. Pass another output location with:
 
 ```bash
 npm run db:build -- --output /path/to/catalogue
+```
+
+`npm run release:pack` creates a deterministic `tar.gz` and SHA-256 sidecar
+under `dist/`. Verify an archive independently with:
+
+```bash
+npm run release:verify -- --archive dist/folklore-corpus-v0.1.0.tar.gz
 ```
 
 ## Database direction
@@ -46,3 +54,5 @@ The first database and ingestion design is now recorded in:
   ingestion module and archive-adapter seam
 - [`db/migrations/0001_core.sql`](db/migrations/0001_core.sql) — initial
   PostgreSQL schema
+- [`db/migrations/0002_rights_gate.sql`](db/migrations/0002_rights_gate.sql) —
+  per-resource rights evidence and fail-closed Release publication checks

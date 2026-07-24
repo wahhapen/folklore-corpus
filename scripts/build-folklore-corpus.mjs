@@ -757,6 +757,13 @@ const releaseArtifacts = new Map([
     await readFile(path.join(root, "schemas/corpus-release-v1.schema.json"), "utf8"),
   ],
   [
+    "manifest.schema.json",
+    await readFile(
+      path.join(root, "schemas/release-manifest-v1.schema.json"),
+      "utf8",
+    ),
+  ],
+  [
     "dataset-card.md",
     await readFile(path.join(root, "docs/dataset-card-v0.1.md"), "utf8"),
   ],
@@ -786,6 +793,10 @@ const releaseManifest = {
   releaseId: "fa:release:corpus-v0.1.0",
   version: "0.1.0",
   publishedAt: "2026-07-24",
+  producer: {
+    repository: "wahhapen/folklore-corpus",
+    commit: "e8cb8a3d60031c2e15eaa3b278ca6353208ecb39",
+  },
   compiler: {
     command: "npm run build:corpus",
     parser: "gutenberg-story-parser-v2",

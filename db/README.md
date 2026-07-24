@@ -6,6 +6,9 @@ storage location for scans, recordings, release archives, or other large
 Artifacts.
 
 `migrations/0001_core.sql` establishes the first normalized model.
+`migrations/0002_rights_gate.sql` adds immutable per-resource rights
+assessments and the fail-closed Release query used before redistribution or ML
+publication.
 `scripts/build-catalogue.mjs` imports the pinned v0.1 Release into a persistent
 embedded PostgreSQL catalogue, materializes normalized Witness
 Representations, and stores captured and derived bytes by SHA-256.

@@ -138,6 +138,14 @@ export async function importRelease({
   if (!(await tableExists(database, "folklore", "resource"))) {
     await database.exec(await readFile(migrationPath, "utf8"));
   }
+  if (!(await tableExists(database, "folklore", "rights_assessment"))) {
+    await database.exec(
+      await readFile(
+        join(repositoryRoot, "db/migrations/0002_rights_gate.sql"),
+        "utf8",
+      ),
+    );
+  }
 
   const manifest = await readJson(join(releasePath, "manifest.json"));
   const captures = await readJsonLines(join(releasePath, "captures.jsonl"));
