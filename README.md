@@ -28,3 +28,12 @@ The future database should ingest immutable Corpus Releases rather than replace
 the raw/derived release boundary. PostgreSQL can become the working catalogue
 and relationship store; original captures and versioned release packages remain
 file/object artifacts.
+
+The first database and ingestion design is now recorded in:
+
+- [`CONTEXT.md`](CONTEXT.md) — canonical domain language
+- [`docs/database-v1.md`](docs/database-v1.md) — storage and relational design
+- [`docs/ingestion-interface-v1.md`](docs/ingestion-interface-v1.md) — deep
+  ingestion module and archive-adapter seam
+- [`db/migrations/0001_core.sql`](db/migrations/0001_core.sql) — initial
+  PostgreSQL schema
