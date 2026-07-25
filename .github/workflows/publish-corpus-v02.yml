@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - .github/workflows/publish-corpus-v02.yml
 
 permissions: {}
 
@@ -105,7 +107,7 @@ jobs:
           test "$(jq -r .producer.commit \
             build/releases/corpus-v0.2.0/manifest.json)" = "$GITHUB_SHA"
 
-      - name: Publish or verify immutable release
+      - name: Publish or verify checksum-pinned release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -115,14 +117,6 @@ jobs:
           archive="bundle/dist/folklore-corpus-v0.2.0.tar.gz"
           checksum="${archive}.sha256"
           manifest="bundle/build/releases/corpus-v0.2.0/manifest.json"
-
-          immutable="$(
-            gh api \
-              -H "X-GitHub-Api-Version: 2026-03-10" \
-              "${repository_api}/immutable-releases" \
-              --jq .enabled
-          )"
-          test "$immutable" = "true"
 
           resolve_tag_commit() {
             local object object_type object_sha
@@ -166,10 +160,64 @@ jobs:
             done
           }
 
+          verify_published_release() {
+            local release_id="$1" archive_asset archive_digest
+            local manifest_asset manifest_digest producer verify_root
+            verify_root="$(mktemp -d)"
+            test "$(
+              gh api "${repository_api}/releases/${release_id}/assets" \
+                --jq length
+            )" = "3"
+            archive_asset="$(
+              gh api "${repository_api}/releases/${release_id}/assets" \
+                --jq '.[] | select(.name == "folklore-corpus-v0.2.0.tar.gz")'
+            )"
+            manifest_asset="$(
+              gh api "${repository_api}/releases/${release_id}/assets" \
+                --jq '.[] | select(.name == "manifest.json")'
+            )"
+            test -n "$archive_asset"
+            test -n "$manifest_asset"
+            archive_digest="$(jq -r .digest <<<"$archive_asset")"
+            manifest_digest="$(jq -r .digest <<<"$manifest_asset")"
+            for name in \
+              folklore-corpus-v0.2.0.tar.gz.sha256 \
+              manifest.json; do
+              asset_id="$(
+                gh api "${repository_api}/releases/${release_id}/assets" \
+                  --jq ".[] | select(.name == \"${name}\") | .id"
+              )"
+              test -n "$asset_id"
+              gh api \
+                -H "Accept: application/octet-stream" \
+                "${repository_api}/releases/assets/${asset_id}" \
+                > "${verify_root}/${name}"
+            done
+            test "$archive_digest" = "sha256:$(
+              cut -d ' ' -f 1 \
+                "${verify_root}/folklore-corpus-v0.2.0.tar.gz.sha256"
+            )"
+            test "$manifest_digest" = "sha256:$(
+              sha256sum "${verify_root}/manifest.json" | cut -d ' ' -f 1
+            )"
+            producer="$(
+              jq -r .producer.commit "${verify_root}/manifest.json"
+            )"
+            test "$(resolve_tag_commit)" = "$producer"
+          }
+
           release_id="$(
             gh api --paginate "${repository_api}/releases?per_page=100" \
               --jq ".[] | select(.tag_name == \"${tag}\") | .id"
           )"
+          if test -n "$release_id" && test "$(
+            gh api "${repository_api}/releases/${release_id}" --jq .draft
+          )" = "false"; then
+            verify_published_release "$release_id"
+            gh api "${repository_api}/releases/${release_id}" --jq .html_url
+            exit 0
+          fi
+
           tag_exists=false
           if gh api "${repository_api}/git/ref/tags/${tag}" \
             >/dev/null 2>&1; then
@@ -181,18 +229,25 @@ jobs:
             draft="$(
               gh api "${repository_api}/releases/${release_id}" --jq .draft
             )"
+            test "$draft" = "true"
+            if test "$tag_exists" = "false"; then
+              gh api \
+                -X PATCH \
+                "${repository_api}/releases/${release_id}" \
+                -f target_commitish="$GITHUB_SHA" \
+                >/dev/null
+              test "$(
+                gh api "${repository_api}/releases/${release_id}" \
+                  --jq .target_commitish
+              )" = "$GITHUB_SHA"
+            fi
             if verify_assets "$release_id"; then
-              if test "$draft" = "true"; then
-                gh release edit "$tag" --draft=false --latest
-              fi
-            elif test "$draft" = "true"; then
+              gh release edit "$tag" --draft=false --latest
+            else
               gh release upload "$tag" \
                 "$archive" "$checksum" "$manifest" --clobber
               verify_assets "$release_id"
               gh release edit "$tag" --draft=false --latest
-            else
-              echo "Published release assets do not match the build" >&2
-              exit 1
             fi
           else
             if test "$tag_exists" = "true"; then
@@ -215,7 +270,10 @@ jobs:
                 --jq ".[] | select(.tag_name == \"${tag}\") | .id"
             )"
             test -n "$release_id"
-            test "$(resolve_tag_commit)" = "$GITHUB_SHA"
+            test "$(
+              gh api "${repository_api}/releases/${release_id}" \
+                --jq .target_commitish
+            )" = "$GITHUB_SHA"
             verify_assets "$release_id"
             gh release edit "$tag" --draft=false --latest
           fi
@@ -224,6 +282,6 @@ jobs:
           release="$(
             gh api "${repository_api}/releases/${release_id}"
           )"
-          jq -e '.draft == false and .immutable == true' <<<"$release" \
-            >/dev/null
+          jq -e '.draft == false' <<<"$release" >/dev/null
+          verify_published_release "$release_id"
           jq -r .html_url <<<"$release"
