@@ -78,10 +78,23 @@ describe("v0.1 release catalogue import", () => {
     `);
     expect(Number(releaseMembers.rows[0].count)).toBe(3_641);
 
+    const multilingualColumns = await database.query<{
+      column_name: string;
+    }>(`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'folklore'
+        AND table_name = 'representation'
+        AND column_name IN ('script_code', 'dialect')
+      ORDER BY column_name
+    `);
+    expect(multilingualColumns.rows.map(({ column_name }) => column_name))
+      .toEqual(["dialect", "script_code"]);
+
     await importRelease({
       database,
       artifactRoot: join(temporaryDirectory, "artifacts"),
     });
     expect(await catalogueStats(database)).toEqual(imported);
-  }, 30_000);
+  });
 });

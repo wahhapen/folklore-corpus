@@ -9,6 +9,11 @@ Artifacts.
 `migrations/0002_rights_gate.sql` adds immutable per-resource rights
 assessments and the fail-closed Release query used before redistribution or ML
 publication.
+`migrations/0003_multilingual_representations.sql` adds optional ISO 15924
+script and dialect metadata to Representations, passage-level BCP 47 overrides,
+and typed translation/transliteration/normalization/transcription Derivations.
+`migrations/0004_ingestion_runs.sql` records resumable CollectionAdapter runs,
+their durable checkpoints, and committed external item keys.
 `scripts/build-catalogue.mjs` imports the pinned v0.1 Release into a persistent
 embedded PostgreSQL catalogue, materializes normalized Witness
 Representations, and stores captured and derived bytes by SHA-256.
