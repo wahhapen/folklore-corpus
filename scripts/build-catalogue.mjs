@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import {
   copyFile,
   mkdir,
@@ -10,6 +9,11 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { PGlite } from "@electric-sql/pglite";
+import {
+  ensureResource,
+  registerArtifact,
+  sha256,
+} from "./lib/catalogue-storage.mjs";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const defaultReleasePath = join(
@@ -17,10 +21,6 @@ const defaultReleasePath = join(
   "data/derived/releases/corpus-v0.1.0",
 );
 const defaultOutputPath = join(repositoryRoot, "build/catalogue-v0.1.0");
-
-function sha256(bytes) {
-  return createHash("sha256").update(bytes).digest("hex");
-}
 
 function parseJsonLines(text) {
   return text
@@ -37,42 +37,6 @@ async function readJsonLines(path) {
   return parseJsonLines(await readFile(path, "utf8"));
 }
 
-async function ensureResource(database, canonicalId, resourceKind) {
-  const inserted = await database.query(
-    `
-      INSERT INTO folklore.resource (canonical_id, resource_kind)
-      VALUES ($1, $2)
-      ON CONFLICT (canonical_id) DO NOTHING
-      RETURNING resource_pk, resource_kind
-    `,
-    [canonicalId, resourceKind],
-  );
-
-  if (inserted.rows.length === 1) {
-    return Number(inserted.rows[0].resource_pk);
-  }
-
-  const existing = await database.query(
-    `
-      SELECT resource_pk, resource_kind
-      FROM folklore.resource
-      WHERE canonical_id = $1
-    `,
-    [canonicalId],
-  );
-
-  if (
-    existing.rows.length !== 1
-    || existing.rows[0].resource_kind !== resourceKind
-  ) {
-    throw new Error(
-      `Identity conflict for ${canonicalId}: expected ${resourceKind}`,
-    );
-  }
-
-  return Number(existing.rows[0].resource_pk);
-}
-
 async function putArtifact({
   database,
   artifactRoot,
@@ -81,8 +45,6 @@ async function putArtifact({
   sourcePath,
 }) {
   const digest = sha256(bytes);
-  const canonicalId = `fa:artifact:sha256-${digest}`;
-  const resourcePk = await ensureResource(database, canonicalId, "artifact");
   const storageKey = join("sha256", digest.slice(0, 2), digest);
   const outputPath = join(artifactRoot, storageKey);
 
@@ -97,20 +59,13 @@ async function putArtifact({
     }
   }
 
-  await database.query(
-    `
-      INSERT INTO folklore.artifact (
-        resource_pk,
-        digest,
-        byte_length,
-        media_type,
-        storage_key
-      )
-      VALUES ($1, decode($2, 'hex'), $3, $4, $5)
-      ON CONFLICT (resource_pk) DO NOTHING
-    `,
-    [resourcePk, digest, bytes.byteLength, mediaType, storageKey],
-  );
+  const { canonicalId, resourcePk } = await registerArtifact({
+    database,
+    digest,
+    byteLength: bytes.byteLength,
+    mediaType,
+    storageKey,
+  });
 
   return { resourcePk, canonicalId, digest, storageKey };
 }
@@ -129,14 +84,30 @@ async function tableExists(database, schema, table) {
   return result.rows[0].exists;
 }
 
-export async function importRelease({
-  database,
-  releasePath = defaultReleasePath,
-  artifactRoot,
-}) {
-  const migrationPath = join(repositoryRoot, "db/migrations/0001_core.sql");
+async function columnExists(database, schema, table, column) {
+  const result = await database.query(
+    `
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = $1
+          AND table_name = $2
+          AND column_name = $3
+      ) AS exists
+    `,
+    [schema, table, column],
+  );
+  return result.rows[0].exists;
+}
+
+export async function applyCatalogueMigrations(database) {
   if (!(await tableExists(database, "folklore", "resource"))) {
-    await database.exec(await readFile(migrationPath, "utf8"));
+    await database.exec(
+      await readFile(
+        join(repositoryRoot, "db/migrations/0001_core.sql"),
+        "utf8",
+      ),
+    );
   }
   if (!(await tableExists(database, "folklore", "rights_assessment"))) {
     await database.exec(
@@ -146,6 +117,40 @@ export async function importRelease({
       ),
     );
   }
+  if (
+    !(await columnExists(
+      database,
+      "folklore",
+      "representation",
+      "script_code",
+    ))
+  ) {
+    await database.exec(
+      await readFile(
+        join(
+          repositoryRoot,
+          "db/migrations/0003_multilingual_representations.sql",
+        ),
+        "utf8",
+      ),
+    );
+  }
+  if (!(await tableExists(database, "folklore", "ingest_run"))) {
+    await database.exec(
+      await readFile(
+        join(repositoryRoot, "db/migrations/0004_ingestion_runs.sql"),
+        "utf8",
+      ),
+    );
+  }
+}
+
+export async function importRelease({
+  database,
+  releasePath = defaultReleasePath,
+  artifactRoot,
+}) {
+  await applyCatalogueMigrations(database);
 
   const manifest = await readJson(join(releasePath, "manifest.json"));
   const captures = await readJsonLines(join(releasePath, "captures.jsonl"));

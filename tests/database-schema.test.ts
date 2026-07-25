@@ -7,6 +7,10 @@ const migrationUrl = new URL(
   "../db/migrations/0001_core.sql",
   import.meta.url,
 );
+const multilingualMigrationUrl = new URL(
+  "../db/migrations/0003_multilingual_representations.sql",
+  import.meta.url,
+);
 
 describe("evidence catalogue migration", () => {
   let database: PGlite | undefined;
@@ -108,6 +112,62 @@ describe("evidence catalogue migration", () => {
           'sha256/short'
         FROM folklore.resource
         WHERE canonical_id = 'fa:artifact:sha256-short';
+      `),
+    ).rejects.toThrow();
+  });
+
+  it("records multilingual representation layers without changing the witness", async () => {
+    database = new PGlite();
+    await database.exec(await readFile(migrationUrl, "utf8"));
+    await database.exec(await readFile(multilingualMigrationUrl, "utf8"));
+
+    const columns = await database.query<{
+      table_name: string;
+      column_name: string;
+    }>(`
+      SELECT table_name, column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'folklore'
+        AND (
+          (table_name = 'representation'
+            AND column_name IN ('script_code', 'dialect'))
+          OR
+          (table_name = 'passage' AND column_name = 'language_tag')
+          OR
+          (table_name = 'derivation' AND column_name = 'derivation_type')
+        )
+      ORDER BY table_name, column_name
+    `);
+
+    expect(columns.rows).toEqual([
+      { table_name: "derivation", column_name: "derivation_type" },
+      { table_name: "passage", column_name: "language_tag" },
+      { table_name: "representation", column_name: "dialect" },
+      { table_name: "representation", column_name: "script_code" },
+    ]);
+
+    await expect(
+      database.exec(`
+        INSERT INTO folklore.resource (canonical_id, resource_kind)
+        VALUES ('fa:derivation:bad-type', 'derivation');
+
+        INSERT INTO folklore.derivation (
+          resource_pk,
+          derivation_type,
+          method,
+          method_version,
+          deterministic,
+          completed_at
+        )
+        SELECT
+          resource_pk,
+          'motif-inference',
+          'test',
+          '1',
+          true,
+          current_timestamp
+        FROM folklore.resource
+        WHERE canonical_id = 'fa:derivation:bad-type';
       `),
     ).rejects.toThrow();
   });

@@ -89,28 +89,85 @@ interface AdapterContext {
     role: string;
     request: CaptureRequest;
   }): Promise<CaptureHandle>;
+
+  readText(handle: CaptureHandle): Promise<string>;
 }
 ```
 
-`capture` handles conditional requests, retries, throttling, safe response
-metadata, streaming hashing, Artifact storage, and Capture creation. An adapter
-interprets archive-native structure but cannot mint public IDs or bypass raw
-evidence.
+`capture` delegates retrieval policy (conditional requests, retries and
+throttling) to the injected transport, then owns safe response metadata,
+streaming hashing, Artifact storage, and Capture creation. An adapter interprets
+archive-native structure but cannot mint public IDs or bypass raw evidence.
 
 ```ts
 type IngestItem = {
   externalKey: string;
   checkpointAfter: JsonValue;
   captures: CaptureHandle[];
+  sourceItem: SourceItemDraft;
   witnesses: WitnessDraft[];
-  representations: RepresentationDraft[];
-  passages?: PassageDraft[];
-  claims?: ClaimDraft[];
+};
+
+type WitnessDraft = {
+  externalKey: string;
+  kind: string;
+  representations: Array<{
+    externalKey: string;
+    captureKey: string;
+    kind: string;
+    languageTag: string | null;
+    scriptCode: string | null;
+    dialect: string | null;
+    derivation: DerivationDraft;
+    passages: PassageDraft[];
+  }>;
 };
 ```
 
 The checkpoint advances only after every Artifact is durable and the entire
 item transaction commits.
+
+## Executable v1 boundary
+
+The contract is implemented in
+`scripts/lib/collection-ingestion.mjs`. `ingestCollection(...)` is an async
+generator that accepts one adapter, a PostgreSQL catalogue, an Artifact root,
+and an engine-owned capture transport. Adapters receive only recorded Capture
+handles and a read method over already stored Artifacts; they cannot perform a
+hidden fetch through the public interface.
+
+The committed fixture adapters prove two different shapes against the same
+contract:
+
+- `scripts/adapters/skvr-fixture.mjs` reads a captured TEI record and emits a
+  Finnish text Witness with line selectors;
+- `scripts/adapters/librivox-fixture.mjs` reads a captured catalogue, captures
+  its referenced audio, and emits an English Witness with both catalogue and
+  audio Representations, proving one-to-many Representation handling and time
+  selectors.
+
+These are contract fixtures, not the full acquisitions owned by issues #6 and
+#7.
+
+An `IngestItem` must provide:
+
+- stable lowercase external keys for the item, Source Item, Witnesses,
+  Representations, and Passages;
+- Capture handles minted by this run's `AdapterContext`;
+- at least one Representation and source-anchored selector per Witness;
+- one recorded Derivation per Representation;
+- captured rights evidence covering every emitted Artifact and
+  Representation;
+- a serializable `checkpointAfter`.
+
+Validation occurs before the item transaction. The engine, not the adapter,
+mints canonical IDs, owns transaction boundaries, stores content-addressed
+Artifacts, creates Captures, records rights assessments and advances the
+checkpoint. It links each logical Source Item through an Edition and Document
+to its Witnesses and includes that Source Item in every Representation
+Derivation. Only an allowlist of non-secret response metadata is persisted.
+No release primitive is present in the adapter context, and an item attempting
+to include one is rejected.
 
 ## Run semantics
 
@@ -121,9 +178,11 @@ item transaction commits.
   if the bytes are unchanged.
 - Remote retrieval is at-least-once; committed catalogue effects are
   idempotent.
-- Progress events are persisted and cursor-addressable.
-- Results remain bounded; detailed changed IDs and issues are stored as
-  report Artifacts rather than returned as enormous arrays.
+- Item commits and their checkpoints are persisted; progress events are
+  emitted from those commits.
+- Unexpected adapter or transport failures pause the run at its last committed
+  checkpoint. Contract/invariant failures mark it failed.
+- Result events remain bounded to one committed item at a time.
 
 ## Invariants hidden by the module
 
@@ -134,8 +193,9 @@ item transaction commits.
    title, parser order, or text similarity.
 4. A corrected OCR or transcript creates a new Representation and Derivation,
    not a rewritten Witness.
-5. Passage identity uses a source anchor when available. Boundary changes
-   create explicit split, merge, or replacement relations.
+5. Passage identity uses a source anchor when available. The adapter seam
+   rejects boundary reuse; a boundary-management workflow must publish an
+   explicit split, merge, or replacement relation.
 6. Claims are immutable and record method, version, asserting agent, and
    Evidence. Machine output never silently becomes reviewed fact.
 7. Every released resource has a complete derivation path to captured
@@ -152,18 +212,18 @@ item transaction commits.
 | --- | --- | --- |
 | Invalid request | unknown adapter, incompatible configuration | fail before mutation |
 | Resumable block | rate limit, authentication, archive or storage outage | persist checkpoint and pause |
-| Rejected item | malformed record, unsupported media, invalid selector | record bounded issue; continue by policy |
+| Invalid item | missing key, rights evidence, provenance, or selector | fail the run before that item commits |
 | Invariant breach | digest mismatch, ID collision, broken provenance | stop the run; never publish |
 | Release conflict | reused version with another manifest | reject publication |
 
-Use **rejected item**, not “quarantine.” Bad source records remain observable
-without turning the entire corpus into a permission bureaucracy.
+Per-item rejection reports and continue policies are deferred until a real
+archive demonstrates that fail-fast validation is too coarse.
 
 ## Performance contract
 
 - bytes and records stream with bounded memory and backpressure;
 - capture cost is linear in retrieved bytes;
-- per-item catalogue writes are transactional and batched internally;
+- per-item catalogue writes and checkpoint advancement are transactional;
 - crash replay cannot duplicate a committed logical item;
 - global duplicate discovery uses indexed blocking, never unbounded all-pairs
   comparison;

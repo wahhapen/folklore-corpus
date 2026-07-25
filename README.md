@@ -56,3 +56,9 @@ The first database and ingestion design is now recorded in:
   PostgreSQL schema
 - [`db/migrations/0002_rights_gate.sql`](db/migrations/0002_rights_gate.sql) —
   per-resource rights evidence and fail-closed Release publication checks
+- [`db/migrations/0003_multilingual_representations.sql`](db/migrations/0003_multilingual_representations.sql)
+  — minimal language/script metadata and typed language Derivations
+- [`db/migrations/0004_ingestion_runs.sql`](db/migrations/0004_ingestion_runs.sql)
+  — durable adapter runs, checkpoints, and committed-item identities
+- [`VISION.md`](VISION.md) — long-term multilingual research direction,
+  deliberately outside the executable roadmap

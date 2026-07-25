@@ -75,6 +75,15 @@ globally unique canonical ID for interchange.
 | `claim_evidence` | Supporting or contradicting resources and selectors |
 | `claim_relation` | Supersedes, retracts, agrees-with, or disputes another Claim |
 | `alias` | Replaced, merged, or split identities without silent ID reuse |
+| `ingest_run` | Adapter identity, request hash, durable checkpoint, and lifecycle |
+| `ingest_item_commit` | Idempotent external item commit within one run |
+
+Representations carry a BCP 47 `language_tag`, an optional ISO 15924
+`script_code`, and an optional source-described `dialect`. Passages may
+override the language tag when a citable section differs from its
+Representation. Derivations may identify the four language transformations
+that must remain explicit: translation, transliteration, normalization, and
+transcription. Other provenance operations leave that type null.
 
 ### Publication
 
