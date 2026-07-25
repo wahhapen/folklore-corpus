@@ -1,0 +1,66 @@
+name: Publish Corpus v0.2.0
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-corpus-v0.2.0
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check release state
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view corpus-v0.2.0 >/dev/null 2>&1; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.release.outputs.publish == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.release.outputs.publish == 'true'
+        run: npm ci
+
+      - name: Build and verify release
+        if: steps.release.outputs.publish == 'true'
+        env:
+          FOLKLORE_PRODUCER_COMMIT: ${{ github.sha }}
+        run: |
+          npm run validate
+          npm run release:build
+          npm run release:pack
+          npm run release:verify -- \
+            --archive dist/folklore-corpus-v0.2.0.tar.gz
+
+      - name: Publish immutable release
+        if: steps.release.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create corpus-v0.2.0 \
+            --target "$GITHUB_SHA" \
+            --title "Folklore Corpus v0.2.0" \
+            --notes "First real multi-source Corpus release: 100 official-source SKVR poems, 27 LibriVox sections, 297 Documents, 3,418 Passages, immutable multilingual provenance, and fail-closed redistribution and ML-use rights evidence." \
+            dist/folklore-corpus-v0.2.0.tar.gz \
+            dist/folklore-corpus-v0.2.0.tar.gz.sha256 \
+            build/releases/corpus-v0.2.0/manifest.json
