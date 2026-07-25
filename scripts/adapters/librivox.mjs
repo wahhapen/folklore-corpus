@@ -1,4 +1,5 @@
 import { IngestValidationError } from "../lib/collection-ingestion.mjs";
+import { XMLParser } from "fast-xml-parser";
 
 const EXPECTED_IDS = Array.from(
   { length: 27 },
@@ -137,7 +138,6 @@ function assertRightsReview(lock, review) {
   const rights = lock.rights;
   const scope = review?.scope;
   const expectedEvidence = new Map([
-    ["recording-policy", lock.sources.librivoxRights.sha256],
     ["recording-item", lock.sources.internetArchiveMetadata.sha256],
     ["source-text-jurisdiction", lock.sources.gutenbergRights.sha256],
   ]);
@@ -202,7 +202,6 @@ export function createLibriVoxAdapter(inputLock) {
       for (const key of [
         "catalogue",
         "internetArchiveMetadata",
-        "librivoxRights",
         "gutenbergRights",
         "jurisdictionReview",
       ]) {
@@ -225,7 +224,7 @@ export function createLibriVoxAdapter(inputLock) {
         await context.readText(shared.catalogue),
       );
       assertCatalogue(lock, catalogue);
-      const internetArchiveMetadata = JSON.parse(
+      const internetArchiveMetadata = new XMLParser().parse(
         await context.readText(shared.internetArchiveMetadata),
       );
       if (
@@ -255,7 +254,11 @@ export function createLibriVoxAdapter(inputLock) {
         yield {
           externalKey: `book-1837-section-${section.id}`,
           checkpointAfter: { index: index + 1 },
-          captures: [audio, shared.jurisdictionReview],
+          captures: [
+            audio,
+            shared.jurisdictionReview,
+            shared.internetArchiveMetadata,
+          ],
           sourceItem: {
             externalKey: `book-1837-section-${section.id}`,
             nativeId: section.id,
@@ -326,7 +329,10 @@ export function createLibriVoxAdapter(inputLock) {
           }],
           rights: {
             ...lock.rights,
-            evidenceCaptureKey: shared.jurisdictionReview.key,
+            evidenceCaptureKeys: [
+              shared.jurisdictionReview.key,
+              shared.internetArchiveMetadata.key,
+            ],
           },
         };
       }

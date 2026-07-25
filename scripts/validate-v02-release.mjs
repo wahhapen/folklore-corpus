@@ -60,6 +60,7 @@ export async function validateV02Release({
   const manifest = await json(join(root, "manifest.json"));
   const manifestSchema = await json(join(root, "manifest.schema.json"));
   const recordSchema = await json(join(root, "schema.json"));
+  const sourceEvidence = await json(join(root, "source-evidence.json"));
   const ajv = new Ajv2020({ allErrors: true, strict: true });
   const validateManifest = ajv.compile(manifestSchema);
   if (!validateManifest(manifest)) {
@@ -121,6 +122,7 @@ export async function validateV02Release({
     aliases: await jsonLines(join(root, "aliases.jsonl")),
     lineageEvents: await jsonLines(join(root, "lineage.jsonl")),
     splitAssignments: await jsonLines(join(root, "splits.jsonl")),
+    sourceItems: await jsonLines(join(root, "source-items.jsonl")),
     representations: await jsonLines(join(root, "representations.jsonl")),
     derivations: await jsonLines(join(root, "derivations.jsonl")),
     rightsAssessments: await jsonLines(join(root, "rights.jsonl")),
@@ -161,6 +163,7 @@ export async function validateV02Release({
   const representationIds = new Set(
     files.representations.map(({ id }) => id),
   );
+  const sourceItemIds = new Set(files.sourceItems.map(({ id }) => id));
   const derivationIds = new Set(files.derivations.map(({ id }) => id));
   const manifestDigests = new Set(
     manifest.artifacts.map(({ sha256 }) => sha256),
@@ -230,8 +233,15 @@ export async function validateV02Release({
       || !derivation.outputIds.every((id) =>
         representationIds.has(id) || artifactIds.has(id)
       )
+      || !derivation.inputIds.length
+      || !derivation.inputIds.every((id) =>
+        captureIds.has(id)
+        || sourceItemIds.has(id)
+        || artifactIds.has(id)
+        || representationIds.has(id)
+      )
     ) {
-      throw new Error(`Broken Derivation outputs: ${derivation.id}`);
+      throw new Error(`Broken Derivation closure: ${derivation.id}`);
     }
   }
   for (const rights of files.rightsAssessments) {
@@ -246,6 +256,24 @@ export async function validateV02Release({
     ) {
       throw new Error(`Fail-closed Rights mismatch: ${rights.id}`);
     }
+  }
+  const internetArchiveMetadataDigest =
+    sourceEvidence.librivox?.sources?.internetArchiveMetadata?.sha256;
+  const internetArchiveMetadataArtifactId =
+    `fa:artifact:sha256-${internetArchiveMetadataDigest}`;
+  if (
+    !/^[0-9a-f]{64}$/.test(internetArchiveMetadataDigest ?? "")
+    || !manifestDigests.has(internetArchiveMetadataDigest)
+    || !files.captures.some(({ rawSha256 }) =>
+      rawSha256 === internetArchiveMetadataDigest
+    )
+    || !files.rightsAssessments.some(({ evidenceArtifactId }) =>
+      evidenceArtifactId === internetArchiveMetadataArtifactId
+    )
+  ) {
+    throw new Error(
+      "LibriVox recording-rights evidence is not closed in the Release",
+    );
   }
 
   const skvr = files.passages.filter(({ id }) =>

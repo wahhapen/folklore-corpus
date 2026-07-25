@@ -297,10 +297,16 @@ function validateItem(item, captured, materialized) {
     }
   }
   const rights = item.rights;
+  const evidenceCaptureKeys = Array.isArray(rights?.evidenceCaptureKeys)
+    ? rights.evidenceCaptureKeys
+    : [rights?.evidenceCaptureKey];
   if (
     !rights
-    || !captured.has(rights.evidenceCaptureKey)
-    || !itemCaptureKeys.has(rights.evidenceCaptureKey)
+    || evidenceCaptureKeys.length === 0
+    || new Set(evidenceCaptureKeys).size !== evidenceCaptureKeys.length
+    || evidenceCaptureKeys.some((key) =>
+      !captured.has(key) || !itemCaptureKeys.has(key)
+    )
   ) {
     throw new IngestValidationError(
       "item.rights with captured evidence is required",
@@ -572,7 +578,7 @@ async function persistRights(database, subject, rights, evidence) {
   const policyDigest = sha256(Buffer.from(canonicalJson(rights)));
   const assessmentId =
     `fa:rights-assessment:sha256-${sha256(Buffer.from(
-      `${subject.canonicalId}:${policyDigest}`,
+      `${subject.canonicalId}:${policyDigest}:${evidence.artifactId}`,
     ))}`;
   const assessmentPk = await ensureResource(
     database,
@@ -699,7 +705,12 @@ async function persistItem({
       ],
     );
 
-    const evidence = captured.get(item.rights.evidenceCaptureKey);
+    const evidenceCaptureKeys = Array.isArray(
+      item.rights.evidenceCaptureKeys,
+    )
+      ? item.rights.evidenceCaptureKeys
+      : [item.rights.evidenceCaptureKey];
+    const evidence = evidenceCaptureKeys.map((key) => captured.get(key));
     const rightsSubjects = new Map();
     for (const handle of item.captures) {
       rightsSubjects.set(handle.artifactId, {
@@ -934,7 +945,14 @@ async function persistItem({
     }
 
     for (const subject of rightsSubjects.values()) {
-      await persistRights(database, subject, item.rights, evidence);
+      for (const evidenceArtifact of evidence) {
+        await persistRights(
+          database,
+          subject,
+          item.rights,
+          evidenceArtifact,
+        );
+      }
     }
 
     await database.query(

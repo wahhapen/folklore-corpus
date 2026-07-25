@@ -15,7 +15,10 @@ import {
   importRelease,
   putArtifact,
 } from "./build-catalogue.mjs";
-import { projectV02Release } from "./build-v02-release.mjs";
+import {
+  projectV02Release,
+  verifyProducerCommit,
+} from "./build-v02-release.mjs";
 import { ingestLibriVox } from "./ingest-librivox.mjs";
 import { ingestCollection } from "./lib/collection-ingestion.mjs";
 import { ensureResource } from "./lib/catalogue-storage.mjs";
@@ -231,6 +234,7 @@ export async function buildV02Catalogue({
   producerCommit,
 }) {
   const started = performance.now();
+  if (releaseRoot != null) await verifyProducerCommit(producerCommit);
   await Promise.all([
     acquireSkvr({ sourceRoot: skvrSourceRoot }),
     acquireLibriVoxSources({ sourceRoot: librivoxSourceRoot }),
@@ -282,6 +286,7 @@ export async function buildV02Catalogue({
         catalogueRoot: outputRoot,
         releaseRoot,
         producerCommit,
+        producerAlreadyVerified: true,
       });
     await database.exec("CHECKPOINT");
     return {

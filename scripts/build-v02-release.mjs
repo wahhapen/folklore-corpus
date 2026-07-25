@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { execFile } from "node:child_process";
 import { createReadStream } from "node:fs";
 import {
   copyFile,
@@ -9,6 +10,7 @@ import {
 } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 
 import { PGlite } from "@electric-sql/pglite";
 
@@ -16,6 +18,7 @@ const repositoryRoot = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "..",
 );
+const run = promisify(execFile);
 const seedReleaseRoot = join(
   repositoryRoot,
   "data/derived/releases/corpus-v0.1.0",
@@ -64,6 +67,30 @@ async function prepareReleaseRoot({ catalogueRoot, releaseRoot }) {
   await mkdir(output);
 }
 
+export async function verifyProducerCommit(producerCommit) {
+  if (!/^[0-9a-f]{40}$/.test(producerCommit)) {
+    throw new Error("A 40-character producer commit is required");
+  }
+  const { stdout: head } = await run("git", ["rev-parse", "HEAD"], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+  });
+  if (head.trim() !== producerCommit) {
+    throw new Error("Producer commit does not equal checked-out HEAD");
+  }
+  await run("git", ["cat-file", "-e", `${producerCommit}^{commit}`], {
+    cwd: repositoryRoot,
+  });
+  const { stdout: status } = await run(
+    "git",
+    ["status", "--porcelain", "--untracked-files=all"],
+    { cwd: repositoryRoot, encoding: "utf8" },
+  );
+  if (status.trim()) {
+    throw new Error("Producer worktree is not clean");
+  }
+}
+
 function option(name, fallback) {
   const index = process.argv.indexOf(name);
   return index === -1 ? fallback : process.argv[index + 1];
@@ -73,30 +100,52 @@ function jsonLine(record) {
   return `${JSON.stringify(record)}\n`;
 }
 
-function releaseCaptureId(row) {
-  if (row.archive_id === "fa:archive:skvr") {
-    return `fa:capture:skvr:skvr-i1-volume:sha256-` +
-      row.capture_artifact_sha256;
+function canonicalJson(value) {
+  if (Array.isArray(value)) {
+    return `[${value.map(canonicalJson).join(",")}]`;
   }
-  return `fa:capture:librivox-celtic-fairy-tales-1837:` +
-    `section-${row.native_id}-audio-64kbps:sha256-` +
-    row.capture_artifact_sha256;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value).sort().map((key) =>
+      `${JSON.stringify(key)}:${canonicalJson(value[key])}`
+    ).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function captureIdentity(descriptor) {
+  return `fa:capture:release-v0.2:sha256-` +
+    sha256(Buffer.from(canonicalJson(descriptor)));
+}
+
+function releaseSourceMetadata(metadata) {
+  return Object.fromEntries(
+    Object.entries(metadata).filter(([key]) => !key.endsWith("CaptureId")),
+  );
+}
+
+function releaseCaptureId(row) {
+  return captureIdentity({
+    archiveId: row.archive_id,
+    sourceId: row.archive_id === "fa:archive:skvr"
+      ? "skvr-i1-volume"
+      : row.native_id,
+    retrievalUri: row.retrieval_uri,
+    artifactSha256: row.capture_artifact_sha256,
+    byteLength: Number(row.capture_artifact_byte_length),
+  });
 }
 
 function releaseEvidenceCaptureId(row) {
   if (row.archive_id === "fa:archive:project-gutenberg") {
     return row.capture_id;
   }
-  const collection = row.archive_id === "fa:archive:skvr"
-    ? "skvr"
-    : "librivox-celtic-fairy-tales-1837";
-  return `fa:capture:${collection}:rights-evidence:sha256-` +
-    row.artifact_sha256;
-}
-
-function releaseDerivationId(representationId) {
-  return `fa:derivation:release-v0.2:sha256-` +
-    sha256(Buffer.from(representationId));
+  return captureIdentity({
+    archiveId: row.archive_id,
+    sourceId: row.source_id,
+    retrievalUri: row.retrieval_uri,
+    artifactSha256: row.artifact_sha256,
+    byteLength: Number(row.byte_length),
+  });
 }
 
 async function readJsonLines(path) {
@@ -266,6 +315,30 @@ async function representationRows(database) {
   return result.rows;
 }
 
+async function sourceItemRows(database) {
+  const result = await database.query(`
+    SELECT
+      source_resource.canonical_id AS id,
+      archive_resource.canonical_id AS archive_id,
+      source_item.native_id,
+      source_item.landing_uri,
+      source_item.native_metadata
+    FROM folklore.source_item source_item
+    JOIN folklore.resource source_resource
+      ON source_resource.resource_pk = source_item.resource_pk
+    JOIN folklore.resource archive_resource
+      ON archive_resource.resource_pk = source_item.archive_resource_pk
+    JOIN folklore.edition edition
+      ON edition.source_item_resource_pk = source_item.resource_pk
+    WHERE archive_resource.canonical_id IN (
+      'fa:archive:skvr',
+      'fa:archive:librivox-celtic-fairy-tales-1837'
+    )
+    ORDER BY id
+  `);
+  return result.rows;
+}
+
 async function derivationRows(database) {
   const result = await database.query(`
     SELECT DISTINCT
@@ -315,6 +388,29 @@ async function derivationRows(database) {
     ORDER BY id
   `);
   return result.rows;
+}
+
+function publishDerivations(derivations, captureIdMap) {
+  return derivations.map((row) => {
+    const content = {
+      type: row.derivation_type,
+      method: row.method,
+      methodVersion: row.method_version,
+      parameters: row.parameters,
+      runtime: row.runtime,
+      deterministic: row.deterministic,
+      inputIds: row.input_ids
+        .map((id) => captureIdMap.get(id) ?? id)
+        .sort(),
+      outputIds: [...row.output_ids].sort(),
+    };
+    return {
+      schemaVersion: "folklore-derivation-v1",
+      id: `fa:derivation:release-v0.2:sha256-` +
+        sha256(Buffer.from(canonicalJson(content))),
+      ...content,
+    };
+  }).sort((left, right) => left.id.localeCompare(right.id));
 }
 
 async function rightsRows(database) {
@@ -696,10 +792,9 @@ export async function projectV02Release({
   catalogueRoot,
   releaseRoot,
   producerCommit,
+  producerAlreadyVerified = false,
 }) {
-  if (!/^[0-9a-f]{40}$/.test(producerCommit)) {
-    throw new Error("A 40-character producer commit is required");
-  }
+  if (!producerAlreadyVerified) await verifyProducerCommit(producerCommit);
   await prepareReleaseRoot({ catalogueRoot, releaseRoot });
   const rows = await selectedRows(database);
     if (rows.length !== 127) {
@@ -709,6 +804,12 @@ export async function projectV02Release({
     if (representations.length !== 227) {
       throw new Error(
         `Expected 227 collection Representations, got ${representations.length}`,
+      );
+    }
+    const sourceItems = await sourceItemRows(database);
+    if (sourceItems.length !== 127) {
+      throw new Error(
+        `Expected 127 logical Source Items, got ${sourceItems.length}`,
       );
     }
     const derivations = await derivationRows(database);
@@ -730,11 +831,16 @@ export async function projectV02Release({
         releaseEvidenceCaptureId(row),
       ]),
     ]);
-    const derivationIdMap = new Map(
-      representations.map((row) => [
-        row.derivation_id,
-        releaseDerivationId(row.id),
-      ]),
+    const publishedDerivations = publishDerivations(
+      derivations,
+      captureIdMap,
+    );
+    const derivationIdByRepresentation = new Map(
+      publishedDerivations.flatMap((derivation) =>
+        derivation.outputIds.filter((id) =>
+          id.startsWith("fa:representation:")
+        ).map((id) => [id, derivation.id])
+      ),
     );
     const seedArtifactPathByDigest = new Map(
       seedArtifacts.map((row) => [
@@ -764,6 +870,17 @@ export async function projectV02Release({
       join(releaseRoot, "manifest.schema.json"),
     );
     await writeJsonLines(
+      join(releaseRoot, "source-items.jsonl"),
+      sourceItems.map((row) => ({
+        schemaVersion: "folklore-source-item-v1",
+        id: row.id,
+        archiveId: row.archive_id,
+        nativeId: row.native_id,
+        landingUri: row.landing_uri,
+        metadata: releaseSourceMetadata(row.native_metadata),
+      })),
+    );
+    await writeJsonLines(
       join(releaseRoot, "representations.jsonl"),
       representations.map((row) => ({
         schemaVersion: "folklore-representation-v1",
@@ -779,23 +896,12 @@ export async function projectV02Release({
         artifactSha256: row.artifact_sha256,
         byteLength: Number(row.byte_length),
         mediaType: row.media_type,
-        derivationId: derivationIdMap.get(row.derivation_id),
+        derivationId: derivationIdByRepresentation.get(row.id),
       })),
     );
     await writeJsonLines(
       join(releaseRoot, "derivations.jsonl"),
-      derivations.map((row) => ({
-        schemaVersion: "folklore-derivation-v1",
-        id: derivationIdMap.get(row.id),
-        type: row.derivation_type,
-        method: row.method,
-        methodVersion: row.method_version,
-        parameters: row.parameters,
-        runtime: row.runtime,
-        deterministic: row.deterministic,
-        inputIds: row.input_ids.map((id) => captureIdMap.get(id) ?? id),
-        outputIds: row.output_ids,
-      })).sort((left, right) => left.id.localeCompare(right.id)),
+      publishedDerivations,
     );
     await writeJsonLines(
       join(releaseRoot, "rights.jsonl"),
@@ -855,6 +961,7 @@ export async function projectV02Release({
         ["aliases", "aliases.jsonl"],
         ["lineageEvents", "lineage.jsonl"],
         ["splitAssignments", "splits.jsonl"],
+        ["sourceItems", "source-items.jsonl"],
         ["representations", "representations.jsonl"],
         ["derivations", "derivations.jsonl"],
         ["rightsAssessments", "rights.jsonl"],
@@ -949,6 +1056,7 @@ export async function projectV02Release({
       ...CORE_JSONL,
       "schema.json",
       "manifest.schema.json",
+      "source-items.jsonl",
       "representations.jsonl",
       "derivations.jsonl",
       "rights.jsonl",

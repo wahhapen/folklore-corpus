@@ -61,14 +61,21 @@ async function verifySource(path, source) {
   return await sha256File(path) === source.sha256;
 }
 
-async function copyJurisdictionReview({ source, destination }) {
-  const committedReview = join(
-    repositoryRoot,
-    "data/librivox/rights-review-us.json",
-  );
+async function copyCommittedEvidence({ source, destination }) {
+  const committedEvidence = source.uri
+    === "urn:folklore:rights-review:librivox-1837-us-v1"
+    ? join(repositoryRoot, "data/librivox/rights-review-us.json")
+    : source.uri === "urn:folklore:rights-review:gutenberg-seed-us-v1"
+    ? join(repositoryRoot, "data/gutenberg/rights-review-us.json")
+    : null;
+  if (committedEvidence == null) {
+    throw new PinnedSourceError(
+      `Unsupported committed evidence URI: ${source.uri}`,
+    );
+  }
   await mkdir(dirname(destination), { recursive: true });
   const partial = `${destination}.part`;
-  const bytes = await readFile(committedReview);
+  const bytes = await readFile(committedEvidence);
   const file = await openNoFollow(
     partial,
     constants.O_WRONLY | constants.O_CREAT | constants.O_TRUNC,
@@ -81,7 +88,7 @@ async function copyJurisdictionReview({ source, destination }) {
   await rename(partial, destination);
   if (!(await verifySource(destination, source))) {
     throw new PinnedSourceError(
-      "Committed jurisdiction review does not match the release lock",
+      "Committed rights evidence does not match the release lock",
     );
   }
 }
@@ -98,7 +105,7 @@ export async function acquireLockedSource({
     return { path: destination, status: "verified-cache" };
   }
   if (source.uri.startsWith("urn:folklore:rights-review:")) {
-    await copyJurisdictionReview({ source, destination });
+    await copyCommittedEvidence({ source, destination });
     return { path: destination, status: "copied-review" };
   }
   const sourceUrl = new URL(source.uri);

@@ -23,25 +23,19 @@
   "mlUseAllowed": true,
   "evidence": [
     {
-      "role": "recording-policy",
-      "uri": "https://librivox.org/pages/about-librivox/",
-      "capturedSha256": "dbc764797988d731f22a069a5e222f792183d155c1da32e44903a9d2a7614687"
-    },
-    {
       "role": "recording-item",
-      "uri": "https://archive.org/metadata/celtic_fairy_tales_0903_librivox",
-      "capturedSha256": "23de32f65537ad9c6cc307d0c0561fe97a1ea85c33fa5050a843063ba8bf3984"
+      "uri": "https://archive.org/download/celtic_fairy_tales_0903_librivox/celtic_fairy_tales_0903_librivox_meta.xml",
+      "capturedSha256": "962adefe6e71cbdcac2c69a55ee227806afa2aa95dc1df2f9938d86b83e221e0"
     },
     {
       "role": "source-text-jurisdiction",
-      "uri": "https://www.gutenberg.org/ebooks/7885",
-      "capturedSha256": "634a06bd920c0ed684361cfb9177dd35c94e18718f9bad8ef18ffa53ebf855e0"
+      "uri": "urn:folklore:rights-review:gutenberg-seed-us-v1",
+      "capturedSha256": "3a4b38835e4e20b15dfe1cb9b507cbaac5f8a2724b27c374ee3f755422a85af8"
     }
   ],
   "basis": [
-    "LibriVox states that its volunteer recordings are released to the public domain.",
-    "The Internet Archive item metadata labels this recording Public Domain.",
-    "Project Gutenberg identifies ebook 7885 as public domain in the USA."
+    "The Internet Archive item metadata file labels this recording Public Domain.",
+    "The accepted Project Gutenberg seed review covers the exact pinned ebook 7885 source bytes in the United States."
   ],
   "limitations": [
     "This is an engineering release-gate record, not legal advice.",

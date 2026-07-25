@@ -24,6 +24,10 @@ npm run validate
 FOLKLORE_PRODUCER_COMMIT=<40-character-HEAD> npm run release:build
 ```
 
+`npm run validate` performs its v0.2 build in a fresh temporary directory,
+binds it to the checked-out commit, validates the complete release, and removes
+the temporary output. It does not depend on a previously built release tree.
+
 It acquires and verifies the locked inputs, creates the embedded PostgreSQL
 catalogue and content-addressed Artifact store under
 `build/catalogue-v0.2.0/`, executes collection audits and the transactional

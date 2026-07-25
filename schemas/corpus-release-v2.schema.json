@@ -11,6 +11,7 @@
     { "$ref": "#/$defs/lineage" },
     { "$ref": "#/$defs/split" },
     { "$ref": "#/$defs/alias" },
+    { "$ref": "#/$defs/sourceItem" },
     { "$ref": "#/$defs/representation" },
     { "$ref": "#/$defs/derivation" },
     { "$ref": "#/$defs/rights" }
@@ -120,6 +121,19 @@
       "properties": {
         "schemaVersion": { "const": "folklore-alias-v1" },
         "targetId": { "$ref": "#/$defs/stableId" }
+      },
+      "additionalProperties": true
+    },
+    "sourceItem": {
+      "type": "object",
+      "required": ["schemaVersion", "id", "archiveId", "nativeId", "landingUri", "metadata"],
+      "properties": {
+        "schemaVersion": { "const": "folklore-source-item-v1" },
+        "id": { "$ref": "#/$defs/stableId" },
+        "archiveId": { "$ref": "#/$defs/stableId" },
+        "nativeId": { "type": "string", "minLength": 1 },
+        "landingUri": { "type": "string", "minLength": 1 },
+        "metadata": { "type": "object" }
       },
       "additionalProperties": true
     },

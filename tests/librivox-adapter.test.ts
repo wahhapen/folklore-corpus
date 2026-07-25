@@ -59,14 +59,15 @@ async function createFixtureSource(root: string) {
         })),
       }],
     })),
-    internetArchiveMetadata: Buffer.from(JSON.stringify({
-      metadata: {
-        identifier: "celtic_fairy_tales_0903_librivox",
-        licenseurl: "https://creativecommons.org/publicdomain/mark/1.0/",
-      },
-    })),
-    librivoxRights: Buffer.from("LibriVox recordings are public domain."),
-    gutenbergRights: Buffer.from("Public domain in the USA."),
+    internetArchiveMetadata: Buffer.from(
+      "<metadata>" +
+      "<identifier>celtic_fairy_tales_0903_librivox</identifier>" +
+      "<licenseurl>https://creativecommons.org/publicdomain/mark/1.0/</licenseurl>" +
+      "</metadata>",
+    ),
+    gutenbergRights: Buffer.from(
+      JSON.stringify({ reviewId: "project-gutenberg-seed-us-v1" }),
+    ),
   };
   sourceFiles.jurisdictionReview = Buffer.from(JSON.stringify({
     reviewId: "librivox-1837-us-v1",
@@ -91,10 +92,6 @@ async function createFixtureSource(root: string) {
     mlUseAllowed: true,
     evidence: [
       {
-        role: "recording-policy",
-        capturedSha256: sha256(sourceFiles.librivoxRights),
-      },
-      {
         role: "recording-item",
         capturedSha256: sha256(sourceFiles.internetArchiveMetadata),
       },
@@ -106,9 +103,8 @@ async function createFixtureSource(root: string) {
   }));
   const paths = {
     catalogue: "catalogue.json",
-    internetArchiveMetadata: "internet-archive-metadata.json",
-    librivoxRights: "librivox-about.html",
-    gutenbergRights: "gutenberg-7885.html",
+    internetArchiveMetadata: "internet-archive-metadata.xml",
+    gutenbergRights: "gutenberg-rights-review-us.json",
     jurisdictionReview: "rights-review-us.json",
   };
   await mkdir(join(root, "audio"), { recursive: true });
@@ -154,7 +150,11 @@ async function createFixtureSource(root: string) {
         {
           uri: `https://example.test/${paths[key as keyof typeof paths]}`,
           path: paths[key as keyof typeof paths],
-          mediaType: key.endsWith("Rights") ? "text/html" : "application/json",
+          mediaType: key === "internetArchiveMetadata"
+            ? "application/xml"
+            : key.endsWith("Rights")
+            ? "text/html"
+            : "application/json",
           byteLength: bytes.byteLength,
           sha256: sha256(bytes),
         },
@@ -289,6 +289,20 @@ describe("LibriVox production adapter", () => {
       reader: "Reader 0",
     });
     expect(trace.rows[0].media_digest).toMatch(/^[0-9a-f]{64}$/);
+
+    const rightsEvidence = await database.query<{
+      digest: string;
+    }>(`
+      SELECT DISTINCT encode(artifact.digest, 'hex') AS digest
+      FROM folklore.rights_assessment assessment
+      JOIN folklore.artifact artifact
+        ON artifact.resource_pk = assessment.evidence_artifact_resource_pk
+      ORDER BY digest
+    `);
+    expect(rightsEvidence.rows.map(({ digest }) => digest).sort()).toEqual([
+      lock.sources.internetArchiveMetadata.sha256,
+      lock.sources.jurisdictionReview.sha256,
+    ].sort());
   });
 
   it("rejects corrupt media before it reaches the catalogue", async () => {

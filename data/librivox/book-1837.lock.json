@@ -19,32 +19,25 @@
       "sha256": "2f498eae5f98078f30ea816e396084f5717de9bed1bc6ec0fbb3855719e82e08"
     },
     "internetArchiveMetadata": {
-      "uri": "https://archive.org/metadata/celtic_fairy_tales_0903_librivox",
-      "path": "internet-archive-metadata.json",
-      "mediaType": "application/json",
-      "byteLength": 103779,
-      "sha256": "23de32f65537ad9c6cc307d0c0561fe97a1ea85c33fa5050a843063ba8bf3984"
-    },
-    "librivoxRights": {
-      "uri": "https://librivox.org/pages/about-librivox/",
-      "path": "librivox-about.html",
-      "mediaType": "text/html; charset=utf-8",
-      "byteLength": 30579,
-      "sha256": "dbc764797988d731f22a069a5e222f792183d155c1da32e44903a9d2a7614687"
+      "uri": "https://archive.org/download/celtic_fairy_tales_0903_librivox/celtic_fairy_tales_0903_librivox_meta.xml",
+      "path": "internet-archive-metadata.xml",
+      "mediaType": "application/xml",
+      "byteLength": 3363,
+      "sha256": "962adefe6e71cbdcac2c69a55ee227806afa2aa95dc1df2f9938d86b83e221e0"
     },
     "gutenbergRights": {
-      "uri": "https://www.gutenberg.org/ebooks/7885",
-      "path": "gutenberg-7885.html",
-      "mediaType": "text/html; charset=utf-8",
-      "byteLength": 24043,
-      "sha256": "634a06bd920c0ed684361cfb9177dd35c94e18718f9bad8ef18ffa53ebf855e0"
+      "uri": "urn:folklore:rights-review:gutenberg-seed-us-v1",
+      "path": "gutenberg-rights-review-us.json",
+      "mediaType": "application/json",
+      "byteLength": 2208,
+      "sha256": "3a4b38835e4e20b15dfe1cb9b507cbaac5f8a2724b27c374ee3f755422a85af8"
     },
     "jurisdictionReview": {
       "uri": "urn:folklore:rights-review:librivox-1837-us-v1",
       "path": "rights-review-us.json",
       "mediaType": "application/json",
-      "byteLength": 1749,
-      "sha256": "a1cd2abf0a888d59f95b99f0c1767a33677c7d56cec7fcf33019ff43f02973b6"
+      "byteLength": 1565,
+      "sha256": "b133c1eb1e2fc3452051baae8ed465d65607be62a11739aa1d52c24da92b5e6d"
     }
   },
   "sections": [

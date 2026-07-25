@@ -22,8 +22,9 @@
     "release:verify": "node scripts/release-archive.mjs verify",
     "validate:release": "node scripts/validate-corpus-release.mjs",
     "validate:v0.2": "node scripts/validate-v02-release.mjs",
+    "validate:v0.2:fresh": "node scripts/validate-v02-build.mjs",
     "test": "vitest run",
-    "validate": "npm run build:corpus && npm run audit:seed && npm run validate:release && npm run validate:v0.2 && npm test"
+    "validate": "npm run build:corpus && npm run audit:seed && npm run validate:release && npm run validate:v0.2:fresh && npm test"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.4",
