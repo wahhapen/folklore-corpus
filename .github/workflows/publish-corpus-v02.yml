@@ -4,45 +4,34 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
-permissions:
-  contents: write
+permissions: {}
 
 concurrency:
   group: publish-corpus-v0.2.0
   cancel-in-progress: false
 
 jobs:
-  publish:
+  build:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
 
-      - name: Check release state
-        id: release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if gh release view corpus-v0.2.0 >/dev/null 2>&1; then
-            echo "publish=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "publish=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - if: steps.release.outputs.publish == 'true'
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 24
           cache: npm
 
       - name: Install dependencies
-        if: steps.release.outputs.publish == 'true'
         run: npm ci
 
       - name: Build and verify release
-        if: steps.release.outputs.publish == 'true'
         env:
           FOLKLORE_PRODUCER_COMMIT: ${{ github.sha }}
         run: |
@@ -51,16 +40,190 @@ jobs:
           npm run release:pack
           npm run release:verify -- \
             --archive dist/folklore-corpus-v0.2.0.tar.gz
+          archive_sha="$(
+            cut -d ' ' -f 1 \
+              dist/folklore-corpus-v0.2.0.tar.gz.sha256
+          )"
+          manifest_sha="$(
+            sha256sum build/releases/corpus-v0.2.0/manifest.json |
+              cut -d ' ' -f 1
+          )"
+          jq -n \
+            --arg producer "$GITHUB_SHA" \
+            --arg archiveSha256 "$archive_sha" \
+            --arg manifestSha256 "$manifest_sha" \
+            '{
+              producerCommit: $producer,
+              archiveSha256: $archiveSha256,
+              manifestSha256: $manifestSha256
+            }' > bundle-metadata.json
 
-      - name: Publish immutable release
-        if: steps.release.outputs.publish == 'true'
+      - name: Stage verified bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: corpus-v0.2.0-release-bundle
+          retention-days: 1
+          if-no-files-found: error
+          path: |
+            dist/folklore-corpus-v0.2.0.tar.gz
+            dist/folklore-corpus-v0.2.0.tar.gz.sha256
+            build/releases/corpus-v0.2.0/manifest.json
+            bundle-metadata.json
+
+  publish:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Download verified bundle
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: corpus-v0.2.0-release-bundle
+          path: bundle
+
+      - name: Verify staged checksums
+        working-directory: bundle
+        run: |
+          test "$(jq -r .producerCommit bundle-metadata.json)" = "$GITHUB_SHA"
+          archive_sha="$(jq -r .archiveSha256 bundle-metadata.json)"
+          manifest_sha="$(jq -r .manifestSha256 bundle-metadata.json)"
+          test "$archive_sha" = "$(
+            cut -d ' ' -f 1 \
+              dist/folklore-corpus-v0.2.0.tar.gz.sha256
+          )"
+          test "$archive_sha" = "$(
+            sha256sum dist/folklore-corpus-v0.2.0.tar.gz |
+              cut -d ' ' -f 1
+          )"
+          test "$manifest_sha" = "$(
+            sha256sum build/releases/corpus-v0.2.0/manifest.json |
+              cut -d ' ' -f 1
+          )"
+          test "$(jq -r .producer.commit \
+            build/releases/corpus-v0.2.0/manifest.json)" = "$GITHUB_SHA"
+
+      - name: Publish or verify immutable release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create corpus-v0.2.0 \
-            --target "$GITHUB_SHA" \
-            --title "Folklore Corpus v0.2.0" \
-            --notes "First real multi-source Corpus release: 100 official-source SKVR poems, 27 LibriVox sections, 297 Documents, 3,418 Passages, immutable multilingual provenance, and fail-closed redistribution and ML-use rights evidence." \
-            dist/folklore-corpus-v0.2.0.tar.gz \
-            dist/folklore-corpus-v0.2.0.tar.gz.sha256 \
-            build/releases/corpus-v0.2.0/manifest.json
+          set -euo pipefail
+          tag="corpus-v0.2.0"
+          repository_api="repos/${GITHUB_REPOSITORY}"
+          archive="bundle/dist/folklore-corpus-v0.2.0.tar.gz"
+          checksum="${archive}.sha256"
+          manifest="bundle/build/releases/corpus-v0.2.0/manifest.json"
+
+          immutable="$(
+            gh api \
+              -H "X-GitHub-Api-Version: 2026-03-10" \
+              "${repository_api}/immutable-releases" \
+              --jq .enabled
+          )"
+          test "$immutable" = "true"
+
+          resolve_tag_commit() {
+            local object object_type object_sha
+            object="$(
+              gh api "${repository_api}/git/ref/tags/${tag}"
+            )"
+            object_type="$(jq -r .object.type <<<"$object")"
+            object_sha="$(jq -r .object.sha <<<"$object")"
+            while test "$object_type" = "tag"; do
+              object="$(
+                gh api "${repository_api}/git/tags/${object_sha}"
+              )"
+              object_type="$(jq -r .object.type <<<"$object")"
+              object_sha="$(jq -r .object.sha <<<"$object")"
+            done
+            test "$object_type" = "commit"
+            printf '%s\n' "$object_sha"
+          }
+
+          verify_assets() {
+            local release_id="$1" expected name asset_id target
+            local verify_root
+            verify_root="$(mktemp -d)"
+            expected=("$archive" "$checksum" "$manifest")
+            test "$(
+              gh api "${repository_api}/releases/${release_id}/assets" \
+                --jq length
+            )" = "${#expected[@]}" || return 1
+            for target in "${expected[@]}"; do
+              name="$(basename "$target")"
+              asset_id="$(
+                gh api "${repository_api}/releases/${release_id}/assets" \
+                  --jq ".[] | select(.name == \"${name}\") | .id"
+              )"
+              test -n "$asset_id" || return 1
+              gh api \
+                -H "Accept: application/octet-stream" \
+                "${repository_api}/releases/assets/${asset_id}" \
+                > "${verify_root}/${name}" || return 1
+              cmp "$target" "${verify_root}/${name}" || return 1
+            done
+          }
+
+          release_id="$(
+            gh api --paginate "${repository_api}/releases?per_page=100" \
+              --jq ".[] | select(.tag_name == \"${tag}\") | .id"
+          )"
+          tag_exists=false
+          if gh api "${repository_api}/git/ref/tags/${tag}" \
+            >/dev/null 2>&1; then
+            tag_exists=true
+            test "$(resolve_tag_commit)" = "$GITHUB_SHA"
+          fi
+
+          if test -n "$release_id"; then
+            draft="$(
+              gh api "${repository_api}/releases/${release_id}" --jq .draft
+            )"
+            if verify_assets "$release_id"; then
+              if test "$draft" = "true"; then
+                gh release edit "$tag" --draft=false --latest
+              fi
+            elif test "$draft" = "true"; then
+              gh release upload "$tag" \
+                "$archive" "$checksum" "$manifest" --clobber
+              verify_assets "$release_id"
+              gh release edit "$tag" --draft=false --latest
+            else
+              echo "Published release assets do not match the build" >&2
+              exit 1
+            fi
+          else
+            if test "$tag_exists" = "true"; then
+              gh release create "$tag" \
+                --verify-tag \
+                --draft \
+                --title "Folklore Corpus v0.2.0" \
+                --notes "First real multi-source Corpus release: 100 official-source SKVR poems, 27 LibriVox sections, 297 Documents, 3,418 Passages, immutable multilingual provenance, and fail-closed redistribution and ML-use rights evidence." \
+                "$archive" "$checksum" "$manifest"
+            else
+              gh release create "$tag" \
+                --target "$GITHUB_SHA" \
+                --draft \
+                --title "Folklore Corpus v0.2.0" \
+                --notes "First real multi-source Corpus release: 100 official-source SKVR poems, 27 LibriVox sections, 297 Documents, 3,418 Passages, immutable multilingual provenance, and fail-closed redistribution and ML-use rights evidence." \
+                "$archive" "$checksum" "$manifest"
+            fi
+            release_id="$(
+              gh api --paginate "${repository_api}/releases?per_page=100" \
+                --jq ".[] | select(.tag_name == \"${tag}\") | .id"
+            )"
+            test -n "$release_id"
+            test "$(resolve_tag_commit)" = "$GITHUB_SHA"
+            verify_assets "$release_id"
+            gh release edit "$tag" --draft=false --latest
+          fi
+
+          test "$(resolve_tag_commit)" = "$GITHUB_SHA"
+          release="$(
+            gh api "${repository_api}/releases/${release_id}"
+          )"
+          jq -e '.draft == false and .immutable == true' <<<"$release" \
+            >/dev/null
+          jq -r .html_url <<<"$release"
