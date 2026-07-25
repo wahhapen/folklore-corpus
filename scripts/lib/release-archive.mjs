@@ -1,8 +1,10 @@
 import { createHash } from "node:crypto";
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
+import { createReadStream } from "node:fs";
 import {
   mkdtemp,
   mkdir,
+  open,
   readFile,
   rm,
   writeFile,
@@ -24,6 +26,45 @@ const maxArchiveBuffer = 128 * 1024 * 1024;
 
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
+}
+
+async function sha256File(path) {
+  const hash = createHash("sha256");
+  for await (const chunk of createReadStream(path)) hash.update(chunk);
+  return hash.digest("hex");
+}
+
+async function gzipToFile(inputPath, outputPath) {
+  const output = await open(outputPath, "w");
+  try {
+    await new Promise((resolvePromise, rejectPromise) => {
+      const child = spawn(
+        "gzip",
+        ["-n", "-9", "-c", inputPath],
+        {
+          stdio: ["ignore", output.fd, "pipe"],
+          windowsHide: true,
+        },
+      );
+      let stderr = "";
+      child.stderr.setEncoding("utf8");
+      child.stderr.on("data", (chunk) => {
+        stderr += chunk;
+      });
+      child.on("error", rejectPromise);
+      child.on("close", (code, signal) => {
+        if (code === 0) {
+          resolvePromise();
+        } else {
+          rejectPromise(new Error(
+            `gzip failed (${code ?? signal}): ${stderr.trim()}`,
+          ));
+        }
+      });
+    });
+  } finally {
+    await output.close();
+  }
 }
 
 function assertSafeRelativePath(path) {
@@ -135,13 +176,8 @@ export async function packRelease({ releaseRoot, outputRoot }) {
       ],
       { maxBuffer: maxArchiveBuffer },
     );
-    const { stdout: archiveBytes } = await run(
-      "gzip",
-      ["-n", "-9", "-c", tarPath],
-      { encoding: "buffer", maxBuffer: maxArchiveBuffer },
-    );
-    await writeFile(archivePath, archiveBytes);
-    const archiveSha256 = sha256(archiveBytes);
+    await gzipToFile(tarPath, archivePath);
+    const archiveSha256 = await sha256File(archivePath);
     await writeFile(
       checksumPath,
       `${archiveSha256}  ${archiveName}\n`,
@@ -169,8 +205,7 @@ export async function verifyReleaseArchive({
     throw new Error("Expected archive SHA-256 is required");
   }
   const absoluteArchivePath = resolve(archivePath);
-  const archiveBytes = await readFile(absoluteArchivePath);
-  const archiveDigest = sha256(archiveBytes);
+  const archiveDigest = await sha256File(absoluteArchivePath);
   if (
     expectedArchiveSha256
     && archiveDigest !== expectedArchiveSha256

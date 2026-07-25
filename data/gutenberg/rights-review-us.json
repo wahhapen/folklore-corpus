@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "folklore-rights-review-v1",
+  "reviewId": "project-gutenberg-seed-us-v1",
+  "reviewedOn": "2026-07-25",
+  "jurisdiction": "US",
+  "reviewState": "accepted",
+  "controlledStatus": "public-domain",
+  "statementUri": "https://www.gutenberg.org/policy/license.html",
+  "rightsSource": "Project Gutenberg item pages and license notices embedded in the pinned source files",
+  "attributionText": "Project Gutenberg and the named historical authors, editors, and translators",
+  "commercialUseAllowed": true,
+  "derivativesAllowed": true,
+  "redistributionAllowed": true,
+  "mlUseAllowed": true,
+  "scope": "The five exact source artifacts retained from Corpus v0.1.0; the assessment is limited to United States publication.",
+  "sources": [
+    {
+      "sourceId": "pg-1597",
+      "landingPage": "https://www.gutenberg.org/ebooks/1597",
+      "sha256": "d7a1cc952edbbd27e6c78931416d14dd25755cf5d9b7add01cf86b4417cd96a2"
+    },
+    {
+      "sourceId": "pg-2591",
+      "landingPage": "https://www.gutenberg.org/ebooks/2591",
+      "sha256": "8ade9aa3b46666387eff9703a32faf14c9bf7a79c787207cfe5fa59fd4c2c8fd"
+    },
+    {
+      "sourceId": "pg-4018",
+      "landingPage": "https://www.gutenberg.org/ebooks/4018",
+      "sha256": "7f973bfeb4a058bf7e5bd5d61a8fbd9e2eab4b05667b218f5d282bcd185575f0"
+    },
+    {
+      "sourceId": "pg-7439",
+      "landingPage": "https://www.gutenberg.org/ebooks/7439",
+      "sha256": "cca3f559bec328bdd0e3a923cf4fe0c40140bed97e45b0a5b60af36caa2aa4c7"
+    },
+    {
+      "sourceId": "pg-7885",
+      "landingPage": "https://www.gutenberg.org/ebooks/7885",
+      "sha256": "6d8df0f35e37fb27599ef21b5d8da199efa8e8b0064bf0b77c88f9fd6edec74f"
+    }
+  ],
+  "evidenceLicense": {
+    "controlledStatus": "permission",
+    "rightsSource": "Project-authored factual engineering review",
+    "attributionText": "Folklore Corpus contributors",
+    "commercialUseAllowed": true,
+    "derivativesAllowed": true,
+    "redistributionAllowed": true,
+    "mlUseAllowed": true
+  },
+  "limitations": [
+    "Project Gutenberg states its copyright determinations for the United States; users elsewhere must check local law.",
+    "This engineering review is not legal advice."
+  ]
+}
