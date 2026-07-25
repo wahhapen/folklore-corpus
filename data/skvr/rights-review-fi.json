@@ -1,0 +1,40 @@
+{
+  "reviewId": "skvr-i1-fi-v1",
+  "reviewedOn": "2026-07-25",
+  "jurisdiction": "FI",
+  "license": "CC-BY-4.0",
+  "licenseStatement": "This project-authored review record is licensed under Creative Commons Attribution 4.0 International.",
+  "scope": {
+    "collection": "SKVR",
+    "volume": "I1",
+    "selection": "base printed poem numbers 1 through 100",
+    "upstreamRepository": "https://github.com/sks190/SKVR",
+    "upstreamCommit": "2cfd7db101e79eb1446d0d2dbb108af1e8b2a18a"
+  },
+  "assessment": "cc-by-4.0",
+  "redistributionAllowed": true,
+  "commercialUseAllowed": true,
+  "derivativesAllowed": true,
+  "mlUseAllowed": true,
+  "evidence": [
+    {
+      "role": "official-repository-license-statement",
+      "path": "README.md",
+      "capturedSha256": "210a577d12701e89080f05f37e8a23de2e4d6ae9391782d0d8870269f3f7a14b"
+    },
+    {
+      "role": "official-volume-data",
+      "path": "skvr_01_1.xml",
+      "capturedSha256": "be3091bf41154879cb26b223941cc9de25bad4b1da178d07d42b3f5ffb44da40"
+    }
+  ],
+  "basis": [
+    "The official SKS190 repository states that the SKVR poems are distributed under Creative Commons Attribution 4.0 International.",
+    "The release preserves the required attribution to the Finnish Literature Society SKS."
+  ],
+  "culturalNotice": "The official repository warns that members of the endangered Karelian, Ludic, Ingrian and Votic language communities may consider some uses inappropriate or culturally appropriative.",
+  "limitations": [
+    "This is an engineering release-gate record, not legal advice.",
+    "License permission does not remove ethical obligations toward source communities."
+  ]
+}

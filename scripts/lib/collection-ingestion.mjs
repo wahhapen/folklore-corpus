@@ -142,7 +142,7 @@ function validateSelector(selector, field) {
   }
 }
 
-function validateItem(item, captured) {
+function validateItem(item, captured, materialized) {
   if (item?.release !== undefined) {
     throw new IngestValidationError("Adapters cannot publish Releases");
   }
@@ -163,6 +163,18 @@ function validateItem(item, captured) {
     }
   }
   const itemCaptureKeys = new Set(item.captures.map(({ key }) => key));
+  const itemArtifacts = item.artifacts ?? [];
+  if (!Array.isArray(itemArtifacts)) {
+    throw new IngestValidationError("item.artifacts must be an array");
+  }
+  for (const handle of itemArtifacts) {
+    if (!handle || materialized.get(handle.key)?.artifactId !== handle.artifactId) {
+      throw new IngestValidationError(
+        "item.artifacts must come from AdapterContext.materialize",
+      );
+    }
+  }
+  const itemArtifactKeys = new Set(itemArtifacts.map(({ key }) => key));
   requireKey(item.sourceItem?.externalKey, "sourceItem.externalKey");
   requireNonEmpty(item.sourceItem?.nativeId, "sourceItem.nativeId");
   if (!Array.isArray(item.witnesses) || item.witnesses.length === 0) {
@@ -185,12 +197,33 @@ function validateItem(item, captured) {
         `witnesses[${witnessIndex}].representations[${representationIndex}]`;
       requireKey(representation.externalKey, `${field}.externalKey`);
       requireNonEmpty(representation.kind, `${field}.kind`);
+      const hasCapture = representation.captureKey != null;
+      const hasArtifact = representation.artifactKey != null;
+      if (hasCapture === hasArtifact) {
+        throw new IngestValidationError(
+          `${field} needs exactly one captureKey or artifactKey`,
+        );
+      }
       if (
-        !captured.has(representation.captureKey)
-        || !itemCaptureKeys.has(representation.captureKey)
+        hasCapture
+        && (
+          !captured.has(representation.captureKey)
+          || !itemCaptureKeys.has(representation.captureKey)
+        )
       ) {
         throw new IngestValidationError(
           `${field}.captureKey must be included in item.captures`,
+        );
+      }
+      if (
+        hasArtifact
+        && (
+          !materialized.has(representation.artifactKey)
+          || !itemArtifactKeys.has(representation.artifactKey)
+        )
+      ) {
+        throw new IngestValidationError(
+          `${field}.artifactKey must be included in item.artifacts`,
         );
       }
       if (!isBcp47LanguageTag(representation.languageTag)) {
@@ -216,6 +249,19 @@ function validateItem(item, captured) {
         throw new IngestValidationError(
           `${field}.derivation is incomplete`,
         );
+      }
+      if (hasArtifact) {
+        if (
+          !Array.isArray(derivation.inputCaptureKeys)
+          || derivation.inputCaptureKeys.length === 0
+          || derivation.inputCaptureKeys.some((key) =>
+            !captured.has(key) || !itemCaptureKeys.has(key)
+          )
+        ) {
+          throw new IngestValidationError(
+            `${field}.derivation.inputCaptureKeys must reference item captures`,
+          );
+        }
       }
       if (
         !Array.isArray(representation.passages)
@@ -251,10 +297,16 @@ function validateItem(item, captured) {
     }
   }
   const rights = item.rights;
+  const evidenceCaptureKeys = Array.isArray(rights?.evidenceCaptureKeys)
+    ? rights.evidenceCaptureKeys
+    : [rights?.evidenceCaptureKey];
   if (
     !rights
-    || !captured.has(rights.evidenceCaptureKey)
-    || !itemCaptureKeys.has(rights.evidenceCaptureKey)
+    || evidenceCaptureKeys.length === 0
+    || new Set(evidenceCaptureKeys).size !== evidenceCaptureKeys.length
+    || evidenceCaptureKeys.some((key) =>
+      !captured.has(key) || !itemCaptureKeys.has(key)
+    )
   ) {
     throw new IngestValidationError(
       "item.rights with captured evidence is required",
@@ -342,7 +394,7 @@ async function recordArtifact({
     mediaType,
     storageKey,
   });
-  return { canonicalId, resourcePk, digest, path };
+  return { canonicalId, resourcePk, digest, byteLength, path };
 }
 
 async function putArtifact(database, artifactRoot, response, mediaType) {
@@ -454,6 +506,22 @@ async function persistCapture({
     response,
     request.mediaType,
   );
+  if (
+    request.expectedSha256 != null
+    && artifact.digest !== request.expectedSha256
+  ) {
+    throw new IngestValidationError(
+      `Captured source digest mismatch for ${request.uri}`,
+    );
+  }
+  if (
+    request.expectedByteLength != null
+    && artifact.byteLength !== request.expectedByteLength
+  ) {
+    throw new IngestValidationError(
+      `Captured source byte length mismatch for ${request.uri}`,
+    );
+  }
   const sourceItemId = `fa:source-item:${adapter.key}:capture-${sourceKey}`;
   const sourceItemPk = await ensureResource(
     database,
@@ -510,7 +578,7 @@ async function persistRights(database, subject, rights, evidence) {
   const policyDigest = sha256(Buffer.from(canonicalJson(rights)));
   const assessmentId =
     `fa:rights-assessment:sha256-${sha256(Buffer.from(
-      `${subject.canonicalId}:${policyDigest}`,
+      `${subject.canonicalId}:${policyDigest}:${evidence.artifactId}`,
     ))}`;
   const assessmentPk = await ensureResource(
     database,
@@ -553,6 +621,7 @@ async function persistItem({
   runPk,
   item,
   captured,
+  materialized,
 }) {
   const digest = sha256(Buffer.from(canonicalJson(item)));
   const alreadyCommitted = await database.query(
@@ -636,9 +705,20 @@ async function persistItem({
       ],
     );
 
-    const evidence = captured.get(item.rights.evidenceCaptureKey);
+    const evidenceCaptureKeys = Array.isArray(
+      item.rights.evidenceCaptureKeys,
+    )
+      ? item.rights.evidenceCaptureKeys
+      : [item.rights.evidenceCaptureKey];
+    const evidence = evidenceCaptureKeys.map((key) => captured.get(key));
     const rightsSubjects = new Map();
     for (const handle of item.captures) {
+      rightsSubjects.set(handle.artifactId, {
+        canonicalId: handle.artifactId,
+        resourcePk: handle.artifactPk,
+      });
+    }
+    for (const handle of item.artifacts ?? []) {
       rightsSubjects.set(handle.artifactId, {
         canonicalId: handle.artifactId,
         resourcePk: handle.artifactPk,
@@ -664,11 +744,15 @@ async function persistItem({
       counts.witnesses += 1;
 
       for (const representation of witness.representations) {
-        const capture = captured.get(representation.captureKey);
+        const capture = representation.captureKey == null
+          ? null
+          : captured.get(representation.captureKey);
+        const artifact = capture
+          ?? materialized.get(representation.artifactKey);
         const representationId =
           `fa:representation:${adapter.key}:${item.externalKey}:` +
           `${witness.externalKey}:${representation.externalKey}:` +
-          `sha256-${capture.digest}`;
+          `sha256-${artifact.digest}`;
         const representationPk = await ensureResource(
           database,
           representationId,
@@ -683,7 +767,7 @@ async function persistItem({
           [
             representationPk,
             witnessPk,
-            capture.artifactPk,
+            artifact.artifactPk,
             representation.kind,
             representation.languageTag ?? null,
             representation.scriptCode ?? null,
@@ -795,7 +879,8 @@ async function persistItem({
 
         const derivationId =
           `fa:derivation:${adapter.key}:sha256-${sha256(Buffer.from(
-            `${representationId}:${capture.captureId}:` +
+            `${representationId}:` +
+            `${capture?.captureId ?? artifact.artifactId}:` +
             canonicalJson(representation.derivation),
           ))}`;
         const derivationPk = await ensureResource(
@@ -819,19 +904,25 @@ async function persistItem({
             representation.derivation.deterministic,
           ],
         );
+        const inputCaptures = capture
+          ? [capture]
+          : representation.derivation.inputCaptureKeys
+            .map((key) => captured.get(key));
+        for (const [inputIndex, inputCapture] of inputCaptures.entries()) {
+          await database.query(
+            `INSERT INTO folklore.derivation_input (
+               derivation_resource_pk, ordinal, input_resource_pk, role
+             ) VALUES ($1, $2, $3, 'capture')
+             ON CONFLICT (derivation_resource_pk, ordinal) DO NOTHING`,
+            [derivationPk, inputIndex, inputCapture.capturePk],
+          );
+        }
         await database.query(
           `INSERT INTO folklore.derivation_input (
              derivation_resource_pk, ordinal, input_resource_pk, role
-           ) VALUES ($1, 0, $2, 'capture')
+           ) VALUES ($1, $2, $3, 'source-item')
            ON CONFLICT (derivation_resource_pk, ordinal) DO NOTHING`,
-          [derivationPk, capture.capturePk],
-        );
-        await database.query(
-          `INSERT INTO folklore.derivation_input (
-             derivation_resource_pk, ordinal, input_resource_pk, role
-           ) VALUES ($1, 1, $2, 'source-item')
-           ON CONFLICT (derivation_resource_pk, ordinal) DO NOTHING`,
-          [derivationPk, sourceItemPk],
+          [derivationPk, inputCaptures.length, sourceItemPk],
         );
         await database.query(
           `INSERT INTO folklore.derivation_output (
@@ -840,12 +931,28 @@ async function persistItem({
            ON CONFLICT (derivation_resource_pk, ordinal) DO NOTHING`,
           [derivationPk, representationPk],
         );
+        if (!capture) {
+          await database.query(
+            `INSERT INTO folklore.derivation_output (
+               derivation_resource_pk, ordinal, output_resource_pk, role
+             ) VALUES ($1, 1, $2, 'artifact')
+             ON CONFLICT (derivation_resource_pk, ordinal) DO NOTHING`,
+            [derivationPk, artifact.artifactPk],
+          );
+        }
         counts.derivations += 1;
       }
     }
 
     for (const subject of rightsSubjects.values()) {
-      await persistRights(database, subject, item.rights, evidence);
+      for (const evidenceArtifact of evidence) {
+        await persistRights(
+          database,
+          subject,
+          item.rights,
+          evidenceArtifact,
+        );
+      }
     }
 
     await database.query(
@@ -905,6 +1012,8 @@ export async function* ingestCollection({
   );
   const captured = new Map();
   const capturedPaths = new Map();
+  const materialized = new Map();
+  const materializedPaths = new Map();
   const context = {
     checkpoint: run.checkpoint,
     signal,
@@ -926,19 +1035,64 @@ export async function* ingestCollection({
       capturedPaths.set(sourceKey, persisted.artifactPath);
       return persisted.handle;
     },
+    materialize: async ({ artifactKey, mediaType, bytes }) => {
+      if (signal.aborted) throw signal.reason ?? new Error("Ingest aborted");
+      requireKey(artifactKey, "materialize.artifactKey");
+      requireNonEmpty(mediaType, "materialize.mediaType");
+      if (bytes === undefined) {
+        throw new IngestValidationError("materialize.bytes is required");
+      }
+      const value = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes);
+      const digest = sha256(value);
+      if (materialized.has(artifactKey)) {
+        const existing = materialized.get(artifactKey);
+        if (existing.digest !== digest) {
+          throw new IngestValidationError(
+            `materialize artifactKey ${artifactKey} changed within one run`,
+          );
+        }
+        return existing;
+      }
+      const artifact = await recordArtifact({
+        database,
+        artifactRoot,
+        digest,
+        byteLength: value.byteLength,
+        mediaType,
+        bytes: value,
+      });
+      const handle = {
+        key: artifactKey,
+        artifactId: artifact.canonicalId,
+        artifactPk: artifact.resourcePk,
+        digest: artifact.digest,
+        mediaType,
+      };
+      materialized.set(artifactKey, handle);
+      materializedPaths.set(artifactKey, artifact.path);
+      return handle;
+    },
     readText: async (handle) => {
-      if (captured.get(handle?.key)?.captureId !== handle?.captureId) {
+      const capturePath =
+        captured.get(handle?.key)?.captureId === handle?.captureId
+          ? capturedPaths.get(handle.key)
+          : null;
+      const artifactPath =
+        materialized.get(handle?.key)?.artifactId === handle?.artifactId
+          ? materializedPaths.get(handle.key)
+          : null;
+      if (!capturePath && !artifactPath) {
         throw new IngestValidationError(
-          "AdapterContext.readText requires a captured handle",
+          "AdapterContext.readText requires an engine-owned handle",
         );
       }
-      return readFile(capturedPaths.get(handle.key), "utf8");
+      return readFile(capturePath ?? artifactPath, "utf8");
     },
   };
 
   try {
     for await (const item of adapter.read(context)) {
-      validateItem(item, captured);
+      validateItem(item, captured, materialized);
       const result = await persistItem({
         database,
         adapter,
@@ -946,6 +1100,7 @@ export async function* ingestCollection({
         runPk: run.runPk,
         item,
         captured,
+        materialized,
       });
       if (!result.skipped) {
         yield {

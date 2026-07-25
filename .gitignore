@@ -1,6 +1,7 @@
 node_modules/
 build/
 dist/
+source-cache/
 coverage/
 __pycache__/
 *.py[cod]

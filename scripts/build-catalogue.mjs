@@ -37,7 +37,7 @@ async function readJsonLines(path) {
   return parseJsonLines(await readFile(path, "utf8"));
 }
 
-async function putArtifact({
+export async function putArtifact({
   database,
   artifactRoot,
   bytes,
@@ -714,6 +714,7 @@ async function main() {
       ...stats,
     }, null, 2));
   } finally {
+    await database.exec("CHECKPOINT");
     await database.close();
   }
 }

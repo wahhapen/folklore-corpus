@@ -1,0 +1,517 @@
+{
+  "version": 1,
+  "collection": {
+    "bookId": "1837",
+    "title": "Celtic Fairy Tales",
+    "languageTag": "en",
+    "scriptCode": "Latn",
+    "sourceTextUri": "https://www.gutenberg.org/ebooks/7885",
+    "sourceTextId": "gutenberg-7885",
+    "internetArchiveId": "celtic_fairy_tales_0903_librivox",
+    "totalDurationSeconds": 23262
+  },
+  "sources": {
+    "catalogue": {
+      "uri": "https://librivox.org/api/feed/audiobooks?id=1837&format=json&extended=1",
+      "path": "api-book-1837.json",
+      "mediaType": "application/json",
+      "byteLength": 9971,
+      "sha256": "2f498eae5f98078f30ea816e396084f5717de9bed1bc6ec0fbb3855719e82e08"
+    },
+    "internetArchiveMetadata": {
+      "uri": "https://archive.org/download/celtic_fairy_tales_0903_librivox/celtic_fairy_tales_0903_librivox_meta.xml",
+      "path": "internet-archive-metadata.xml",
+      "mediaType": "application/xml",
+      "byteLength": 3363,
+      "sha256": "962adefe6e71cbdcac2c69a55ee227806afa2aa95dc1df2f9938d86b83e221e0"
+    },
+    "gutenbergRights": {
+      "uri": "urn:folklore:rights-review:gutenberg-seed-us-v1",
+      "path": "gutenberg-rights-review-us.json",
+      "mediaType": "application/json",
+      "byteLength": 2208,
+      "sha256": "3a4b38835e4e20b15dfe1cb9b507cbaac5f8a2724b27c374ee3f755422a85af8"
+    },
+    "jurisdictionReview": {
+      "uri": "urn:folklore:rights-review:librivox-1837-us-v1",
+      "path": "rights-review-us.json",
+      "mediaType": "application/json",
+      "byteLength": 1565,
+      "sha256": "b133c1eb1e2fc3452051baae8ed465d65607be62a11739aa1d52c24da92b5e6d"
+    }
+  },
+  "sections": [
+    {
+      "id": "153266",
+      "sectionNumber": 0,
+      "title": "00 - Preface",
+      "reader": {
+        "id": "1401",
+        "name": "Sibella Denton"
+      },
+      "durationSeconds": 504,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_00_jacobs_64kb.mp3",
+        "path": "audio/153266.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 4034896,
+        "sha256": "88f9515c6c404ee24340369c0fb4a671db1c21601505c89f6cf744a0bdc00a4b"
+      }
+    },
+    {
+      "id": "153267",
+      "sectionNumber": 1,
+      "title": "01 - Connla and the Fairy Maiden",
+      "reader": {
+        "id": "2298",
+        "name": "Pete Lutz"
+      },
+      "durationSeconds": 301,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_01_jacobs_64kb.mp3",
+        "path": "audio/153267.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 2409997,
+        "sha256": "79667840a94b823ec44be904315f25cbf5c50790cbe45797b50b41855c9f30b5"
+      }
+    },
+    {
+      "id": "153268",
+      "sectionNumber": 2,
+      "title": "02 - Guleesh",
+      "reader": {
+        "id": "2234",
+        "name": "Lars Rolander (1942-2016)"
+      },
+      "durationSeconds": 2340,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_02_jacobs_64kb.mp3",
+        "path": "audio/153268.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 18720936,
+        "sha256": "d950cb64e37f92124a9216865deedbbfde8fa277f90a3b3ec0b9a89a425338b3"
+      }
+    },
+    {
+      "id": "153269",
+      "sectionNumber": 3,
+      "title": "03 - The Field of Boliauns",
+      "reader": {
+        "id": "2298",
+        "name": "Pete Lutz"
+      },
+      "durationSeconds": 327,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_03_jacobs_64kb.mp3",
+        "path": "audio/153269.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 2616969,
+        "sha256": "c9cc61a08082a041367890a19996898c2eefc23860d879d255e233eeffeca93c"
+      }
+    },
+    {
+      "id": "153270",
+      "sectionNumber": 4,
+      "title": "04 - The Horned Woman",
+      "reader": {
+        "id": "2298",
+        "name": "Pete Lutz"
+      },
+      "durationSeconds": 302,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_04_jacobs_64kb.mp3",
+        "path": "audio/153270.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 2420946,
+        "sha256": "43ce3746104e59f7305e2ede11f1290afc5c2094c50cbe4c547e27949f5ed5c0"
+      }
+    },
+    {
+      "id": "153271",
+      "sectionNumber": 5,
+      "title": "05 - Conall Yellowclaw",
+      "reader": {
+        "id": "2234",
+        "name": "Lars Rolander (1942-2016)"
+      },
+      "durationSeconds": 1749,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_05_jacobs_64kb.mp3",
+        "path": "audio/153271.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 13992982,
+        "sha256": "6a3d904a5a545d00206d7b2aa44cf50ec6ee2a2f8013fb27b76aed45951c5958"
+      }
+    },
+    {
+      "id": "153272",
+      "sectionNumber": 6,
+      "title": "06 -  Hudden and Dudden and Donald O'Neary",
+      "reader": {
+        "id": "2298",
+        "name": "Pete Lutz"
+      },
+      "durationSeconds": 688,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_06_jacobs_64kb.mp3",
+        "path": "audio/153272.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 5512517,
+        "sha256": "bfe8dfa9415cdceb06733bfa80c6d09eee4e30fba0b61b6aee7a94fb1e5d8b0f"
+      }
+    },
+    {
+      "id": "153273",
+      "sectionNumber": 7,
+      "title": "07 - The Shepherd of Myddvai",
+      "reader": {
+        "id": "1401",
+        "name": "Sibella Denton"
+      },
+      "durationSeconds": 249,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_07_jacobs_64kb.mp3",
+        "path": "audio/153273.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 1993165,
+        "sha256": "16af58481666bdf32ecd5f4d64bf30ee29cf5ee523e729ff757ff5fbb6ddb942"
+      }
+    },
+    {
+      "id": "153274",
+      "sectionNumber": 8,
+      "title": "08 - The Sprightly Tailor",
+      "reader": {
+        "id": "2298",
+        "name": "Pete Lutz"
+      },
+      "durationSeconds": 317,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_08_jacobs_64kb.mp3",
+        "path": "audio/153274.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 2538393,
+        "sha256": "fc734ff9be41fd7075f949cb5a9e5a3c36ee23b69733fa62dd77536a7cf8074b"
+      }
+    },
+    {
+      "id": "153275",
+      "sectionNumber": 9,
+      "title": "09 - The Story of Dierdre",
+      "reader": {
+        "id": "3433",
+        "name": "Bob Sherman"
+      },
+      "durationSeconds": 1727,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_09_jacobs_64kb.mp3",
+        "path": "audio/153275.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 13818066,
+        "sha256": "09f71c65fe25bb1f68904c0bba49face93390d67cd6165c0584ddd40d040995b"
+      }
+    },
+    {
+      "id": "153276",
+      "sectionNumber": 10,
+      "title": "10 - Munachar and Manachar",
+      "reader": {
+        "id": "2298",
+        "name": "Pete Lutz"
+      },
+      "durationSeconds": 375,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_10_jacobs_64kb.mp3",
+        "path": "audio/153276.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 3007343,
+        "sha256": "eb2a266a25b0d334ed84cfd48ae8667662f15823fa8af94b27f64f501c1f78d8"
+      }
+    },
+    {
+      "id": "153277",
+      "sectionNumber": 11,
+      "title": "11 - Gold-Tree and Silver-Tree",
+      "reader": {
+        "id": "2298",
+        "name": "Pete Lutz"
+      },
+      "durationSeconds": 359,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_11_jacobs_64kb.mp3",
+        "path": "audio/153277.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 2880283,
+        "sha256": "02c6c63ec7bab5c1f0fd3e8fca6773733c6465738bc2da66eb2f8b97eacc86ab"
+      }
+    },
+    {
+      "id": "153278",
+      "sectionNumber": 12,
+      "title": "12 - King O'Toole and His Goose",
+      "reader": {
+        "id": "1401",
+        "name": "Sibella Denton"
+      },
+      "durationSeconds": 426,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_12_jacobs_64kb.mp3",
+        "path": "audio/153278.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 3411426,
+        "sha256": "37d26319a221468c7c2866ab4aa079eb5251a28d7651e50f0d64d7e4b2db0f08"
+      }
+    },
+    {
+      "id": "153279",
+      "sectionNumber": 13,
+      "title": "13 - The Wooing of Olwen",
+      "reader": {
+        "id": "2234",
+        "name": "Lars Rolander (1942-2016)"
+      },
+      "durationSeconds": 1596,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_13_jacobs_64kb.mp3",
+        "path": "audio/153279.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 12768780,
+        "sha256": "e7dfc93fb1a387d97b8cc864f2cb5fbbdf06ba644299c8c434fe160c47349671"
+      }
+    },
+    {
+      "id": "153280",
+      "sectionNumber": 14,
+      "title": "14 - Jack and His Comrades",
+      "reader": {
+        "id": "3479",
+        "name": "Karan Yamada"
+      },
+      "durationSeconds": 928,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_14_jacobs_64kb.mp3",
+        "path": "audio/153280.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 7428306,
+        "sha256": "bba32e101b798bec3daeec9c1b72da77d67909bc1dae50881828005afa9430ad"
+      }
+    },
+    {
+      "id": "153281",
+      "sectionNumber": 15,
+      "title": "15 - The Shee an Gannon and the Gruagach Gaire",
+      "reader": {
+        "id": "3479",
+        "name": "Karan Yamada"
+      },
+      "durationSeconds": 965,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_15_jacobs_64kb.mp3",
+        "path": "audio/153281.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 7723735,
+        "sha256": "0d8a7150343632ac926c80d51e7446fbf355c01f451f4323692fc3535137a1da"
+      }
+    },
+    {
+      "id": "153282",
+      "sectionNumber": 16,
+      "title": "16 - The Story-Teller at Fault",
+      "reader": {
+        "id": "3479",
+        "name": "Karan Yamada"
+      },
+      "durationSeconds": 1191,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_16_jacobs_64kb.mp3",
+        "path": "audio/153282.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 9528551,
+        "sha256": "2e31727d0bad5252d0cc56d83d0a8111817066502097b12b87991300f01ba230"
+      }
+    },
+    {
+      "id": "153283",
+      "sectionNumber": 17,
+      "title": "17 - The Sea-Maiden",
+      "reader": {
+        "id": "2506",
+        "name": "Julie VW"
+      },
+      "durationSeconds": 1265,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_17_jacobs_64kb.mp3",
+        "path": "audio/153283.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 10121217,
+        "sha256": "ef2e527ade1d4325d1678f78fd42a85da9ec5f29de41823ecd7f94b453145b9b"
+      }
+    },
+    {
+      "id": "153284",
+      "sectionNumber": 18,
+      "title": "18 - A Legend of Knockmany",
+      "reader": {
+        "id": "2298",
+        "name": "Pete Lutz"
+      },
+      "durationSeconds": 1083,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_18_jacobs_64kb.mp3",
+        "path": "audio/153284.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 8668809,
+        "sha256": "da1fa55b93ff7322002506e5690913cec86f1f4133b54050a5a4e9aa8e58fa44"
+      }
+    },
+    {
+      "id": "153285",
+      "sectionNumber": 19,
+      "title": "19 - Fair, Brown, and Trembling",
+      "reader": {
+        "id": "2234",
+        "name": "Lars Rolander (1942-2016)"
+      },
+      "durationSeconds": 1405,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_19_jacobs_64kb.mp3",
+        "path": "audio/153285.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 11241056,
+        "sha256": "5382114496de7e8a08c54e5d8cdcb4e77c7ef152e76188a3f8643be0bc2c55f6"
+      }
+    },
+    {
+      "id": "153286",
+      "sectionNumber": 20,
+      "title": "20 - Jack and his Master",
+      "reader": {
+        "id": "3479",
+        "name": "Karan Yamada"
+      },
+      "durationSeconds": 986,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_20_jacobs_64kb.mp3",
+        "path": "audio/153286.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 7893704,
+        "sha256": "6a16389734965bea303e73403417558cdc0e02bf165c1cd8c19146f486ef8968"
+      }
+    },
+    {
+      "id": "153287",
+      "sectionNumber": 21,
+      "title": "21 - Beth Gellert",
+      "reader": {
+        "id": "2298",
+        "name": "Pete Lutz"
+      },
+      "durationSeconds": 180,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_21_jacobs_64kb.mp3",
+        "path": "audio/153287.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 1442295,
+        "sha256": "1b5146c47a0a83bbb03f9f706d4fe53934aca97098e8281d4a0c10cd06020009"
+      }
+    },
+    {
+      "id": "153288",
+      "sectionNumber": 22,
+      "title": "22 - The Tale of Ivan",
+      "reader": {
+        "id": "1401",
+        "name": "Sibella Denton"
+      },
+      "durationSeconds": 378,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_22_jacobs_64kb.mp3",
+        "path": "audio/153288.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 3026151,
+        "sha256": "f628a0e24762acd3b910ca722aa6749eca504b7ae5ad43597db3b2d6c55a9f2a"
+      }
+    },
+    {
+      "id": "153289",
+      "sectionNumber": 23,
+      "title": "23 - Andrew Coffey",
+      "reader": {
+        "id": "1401",
+        "name": "Sibella Denton"
+      },
+      "durationSeconds": 425,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_23_jacobs_64kb.mp3",
+        "path": "audio/153289.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 3404195,
+        "sha256": "93d7a9a37af7b9a68d9fe86e433a06d65e0a8f49dd463a7c3d338bb41d65eba8"
+      }
+    },
+    {
+      "id": "153290",
+      "sectionNumber": 24,
+      "title": "24 - The Battle of the Birds",
+      "reader": {
+        "id": "2234",
+        "name": "Lars Rolander (1942-2016)"
+      },
+      "durationSeconds": 1931,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_24_jacobs_64kb.mp3",
+        "path": "audio/153290.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 15454794,
+        "sha256": "58e015f38e916fb816c5043729a38b2956147d2e050baa24722d0d62c27b7d5c"
+      }
+    },
+    {
+      "id": "153291",
+      "sectionNumber": 25,
+      "title": "25 - Brewery of Eggshells",
+      "reader": {
+        "id": "1401",
+        "name": "Sibella Denton"
+      },
+      "durationSeconds": 162,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_25_jacobs_64kb.mp3",
+        "path": "audio/153291.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 1298308,
+        "sha256": "c1fe3c8ff4cc69fe1099d60afd74ef47b89f252533132cc7c997ba26949f5f95"
+      }
+    },
+    {
+      "id": "153292",
+      "sectionNumber": 26,
+      "title": "26 - The Lad with the Goat Skin",
+      "reader": {
+        "id": "3479",
+        "name": "Karan Yamada"
+      },
+      "durationSeconds": 1103,
+      "media": {
+        "uri": "https://www.archive.org/download/celtic_fairy_tales_0903_librivox/celticfairytales_26_jacobs_64kb.mp3",
+        "path": "audio/153292.mp3",
+        "mediaType": "audio/mpeg",
+        "byteLength": 8826506,
+        "sha256": "c293d90aeda74db323c1a7dc4f491f2b73f59e48c1fa74b264a7755418e49beb"
+      }
+    }
+  ],
+  "rights": {
+    "statementUri": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "controlledStatus": "public-domain",
+    "rightsSource": "LibriVox recording declaration and Project Gutenberg 7885 US jurisdiction review",
+    "attributionText": "LibriVox recording of Celtic Fairy Tales by Joseph Jacobs, read by LibriVox volunteers",
+    "commercialUseAllowed": true,
+    "derivativesAllowed": true,
+    "redistributionAllowed": true,
+    "mlUseAllowed": true,
+    "jurisdiction": "US",
+    "reviewedOn": "2026-07-25",
+    "reviewState": "accepted"
+  }
+}

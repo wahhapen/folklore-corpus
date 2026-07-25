@@ -90,7 +90,13 @@ interface AdapterContext {
     request: CaptureRequest;
   }): Promise<CaptureHandle>;
 
-  readText(handle: CaptureHandle): Promise<string>;
+  materialize(request: {
+    artifactKey: string;
+    mediaType: string;
+    bytes: Uint8Array;
+  }): Promise<ArtifactHandle>;
+
+  readText(handle: CaptureHandle | ArtifactHandle): Promise<string>;
 }
 ```
 
@@ -98,12 +104,17 @@ interface AdapterContext {
 throttling) to the injected transport, then owns safe response metadata,
 streaming hashing, Artifact storage, and Capture creation. An adapter interprets
 archive-native structure but cannot mint public IDs or bypass raw evidence.
+`materialize` is the corresponding narrow path for deterministic derived
+bytes: the engine hashes and stores them, while the emitted Representation
+must name its captured inputs in the Derivation. It never creates a fake
+Capture for a locally derived Artifact.
 
 ```ts
 type IngestItem = {
   externalKey: string;
   checkpointAfter: JsonValue;
   captures: CaptureHandle[];
+  artifacts?: ArtifactHandle[];
   sourceItem: SourceItemDraft;
   witnesses: WitnessDraft[];
 };
@@ -113,7 +124,8 @@ type WitnessDraft = {
   kind: string;
   representations: Array<{
     externalKey: string;
-    captureKey: string;
+    captureKey?: string;
+    artifactKey?: string;
     kind: string;
     languageTag: string | null;
     scriptCode: string | null;
@@ -149,13 +161,56 @@ contract:
 These are contract fixtures, not the full acquisitions owned by issues #6 and
 #7.
 
+## LibriVox book 1837 production slice
+
+The production audio adapter is implemented in
+`scripts/adapters/librivox.mjs`. Its reviewed lock,
+`data/librivox/book-1837.lock.json`, fixes book `1837`, section IDs
+`153266–153292`, their source metadata, and the SHA-256 plus byte length of
+every 64 kbps MP3. The lock also pins the exact LibriVox API, Internet Archive
+metadata, LibriVox policy, Gutenberg 7885 rights page, and US jurisdiction
+review used for release admission.
+
+Acquire or verify the 32 source objects:
+
+```bash
+npm run source:librivox
+```
+
+Downloads use an atomic `.part` file, resume with an HTTP Range request, and
+are admitted to the source cache only after both byte length and SHA-256 match
+the lock. A server that ignores Range restarts the temporary file rather than
+concatenating incompatible responses.
+
+Import into a persistent catalogue and audit the result:
+
+```bash
+npm run ingest:librivox
+npm run audit:librivox
+```
+
+The adapter emits one Source Item, audio Witness, source-provided MP3
+Representation, and whole-section time Passage per LibriVox section. Catalogue
+and media bytes remain separate Captures. Every section preserves the native
+section ID, title, reader, duration, media URL/digest, Internet Archive item,
+and relationship to Project Gutenberg 7885. No transcript or text/audio
+alignment is asserted.
+
+`data/librivox/rights-review-us.json` is an engineering release-gate record,
+not legal advice. It keeps the recording declaration and source-text
+jurisdiction decision explicit and warns users outside the United States to
+perform their own review.
+
 An `IngestItem` must provide:
 
 - stable lowercase external keys for the item, Source Item, Witnesses,
   Representations, and Passages;
 - Capture handles minted by this run's `AdapterContext`;
+- materialized Artifact handles minted by this run for derived
+  Representations;
 - at least one Representation and source-anchored selector per Witness;
 - one recorded Derivation per Representation;
+- captured inputs for every derived Artifact Representation;
 - captured rights evidence covering every emitted Artifact and
   Representation;
 - a serializable `checkpointAfter`.
@@ -168,6 +223,17 @@ to its Witnesses and includes that Source Item in every Representation
 Derivation. Only an allowlist of non-secret response metadata is persisted.
 No release primitive is present in the adapter context, and an item attempting
 to include one is rejected.
+
+Issue #6 adds the production SKVR I1 adapter. Its checked-in manifest pins
+`skvr01100010` through `skvr01101000`, and its source lock pins the official
+SKS190 repository commit and I1 volume digest. Because the per-record TEI
+endpoint is not reproducibly reachable from clean builds, the release captures
+the official volume XML, creates an exact per-record XML Representation, and
+materializes deterministic Unicode plain text as a separate content-addressed
+Representation. The electronic archive ID and printed citation are preserved
+from captured bytes; a persistent URN is not asserted unless it appears in
+captured evidence. Source XML and plain-text Representations share stable
+Witness and Passage identities but never share a Representation identity.
 
 ## Run semantics
 

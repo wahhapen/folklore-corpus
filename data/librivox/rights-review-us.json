@@ -1,0 +1,44 @@
+{
+  "reviewId": "librivox-1837-us-v1",
+  "reviewedOn": "2026-07-25",
+  "reviewState": "accepted",
+  "jurisdiction": "US",
+  "license": "CC0-1.0",
+  "licenseStatement": "This project-authored review record is dedicated to the public domain under CC0 1.0.",
+  "scope": {
+    "bookId": "1837",
+    "sectionIds": {
+      "first": "153266",
+      "last": "153292",
+      "count": 27
+    },
+    "sourceTextId": "gutenberg-7885",
+    "internetArchiveId": "celtic_fairy_tales_0903_librivox"
+  },
+  "recording": "public-domain",
+  "sourceText": "public-domain",
+  "redistributionAllowed": true,
+  "commercialUseAllowed": true,
+  "derivativesAllowed": true,
+  "mlUseAllowed": true,
+  "evidence": [
+    {
+      "role": "recording-item",
+      "uri": "https://archive.org/download/celtic_fairy_tales_0903_librivox/celtic_fairy_tales_0903_librivox_meta.xml",
+      "capturedSha256": "962adefe6e71cbdcac2c69a55ee227806afa2aa95dc1df2f9938d86b83e221e0"
+    },
+    {
+      "role": "source-text-jurisdiction",
+      "uri": "urn:folklore:rights-review:gutenberg-seed-us-v1",
+      "capturedSha256": "3a4b38835e4e20b15dfe1cb9b507cbaac5f8a2724b27c374ee3f755422a85af8"
+    }
+  ],
+  "basis": [
+    "The Internet Archive item metadata file labels this recording Public Domain.",
+    "The accepted Project Gutenberg seed review covers the exact pinned ebook 7885 source bytes in the United States."
+  ],
+  "limitations": [
+    "This is an engineering release-gate record, not legal advice.",
+    "Users outside the United States must make their own jurisdiction-specific assessment."
+  ]
+}

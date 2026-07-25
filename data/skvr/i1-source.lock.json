@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "collection": "SKVR",
+  "upstream": {
+    "owner": "sks190",
+    "repository": "SKVR",
+    "url": "https://github.com/sks190/SKVR",
+    "commit": "2cfd7db101e79eb1446d0d2dbb108af1e8b2a18a"
+  },
+  "sources": {
+    "volume": {
+      "uri": "https://raw.githubusercontent.com/sks190/SKVR/2cfd7db101e79eb1446d0d2dbb108af1e8b2a18a/skvr_01_1.xml",
+      "sourcePath": "upstream/skvr_01_1.xml",
+      "mediaType": "application/xml",
+      "byteLength": 2631510,
+      "sha256": "be3091bf41154879cb26b223941cc9de25bad4b1da178d07d42b3f5ffb44da40"
+    },
+    "readme": {
+      "uri": "https://raw.githubusercontent.com/sks190/SKVR/2cfd7db101e79eb1446d0d2dbb108af1e8b2a18a/README.md",
+      "sourcePath": "upstream/README.md",
+      "mediaType": "text/markdown; charset=utf-8",
+      "byteLength": 1875,
+      "sha256": "210a577d12701e89080f05f37e8a23de2e4d6ae9391782d0d8870269f3f7a14b"
+    },
+    "rightsReview": {
+      "uri": "urn:folklore-corpus:rights-review:skvr-i1-fi-v1",
+      "sourcePath": "review/rights-review-fi.json",
+      "mediaType": "application/json",
+      "byteLength": 1649,
+      "sha256": "27818c9289a9fc581dff6a2a90d7343499d4a60d3e231bbab211dbab371e7f23"
+    }
+  }
+}

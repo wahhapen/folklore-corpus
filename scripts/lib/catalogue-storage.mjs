@@ -53,8 +53,29 @@ export async function registerArtifact({
     `INSERT INTO folklore.artifact (
        resource_pk, digest, byte_length, media_type, storage_key
      ) VALUES ($1, decode($2, 'hex'), $3, $4, $5)
-     ON CONFLICT (resource_pk) DO NOTHING`,
+     ON CONFLICT DO NOTHING`,
     [resourcePk, digest, byteLength, mediaType, storageKey],
   );
+  const existing = await database.query(
+    `SELECT
+       encode(digest, 'hex') AS digest,
+       byte_length,
+       media_type,
+       storage_key
+     FROM folklore.artifact
+     WHERE resource_pk = $1`,
+    [resourcePk],
+  );
+  if (
+    existing.rows.length !== 1
+    || existing.rows[0].digest !== digest
+    || Number(existing.rows[0].byte_length) !== byteLength
+    || existing.rows[0].media_type !== mediaType
+    || existing.rows[0].storage_key !== storageKey
+  ) {
+    throw new CatalogueInvariantError(
+      `Artifact metadata conflict for ${canonicalId}`,
+    );
+  }
   return { canonicalId, resourcePk };
 }
