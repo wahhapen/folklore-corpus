@@ -110,6 +110,7 @@ jobs:
       - name: Publish or verify checksum-pinned release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           tag="corpus-v0.2.0"
@@ -270,10 +271,12 @@ jobs:
                 --jq ".[] | select(.tag_name == \"${tag}\") | .id"
             )"
             test -n "$release_id"
-            test "$(
-              gh api "${repository_api}/releases/${release_id}" \
-                --jq .target_commitish
-            )" = "$GITHUB_SHA"
+            if test "$tag_exists" = "false"; then
+              test "$(
+                gh api "${repository_api}/releases/${release_id}" \
+                  --jq .target_commitish
+              )" = "$GITHUB_SHA"
+            fi
             verify_assets "$release_id"
             gh release edit "$tag" --draft=false --latest
           fi
