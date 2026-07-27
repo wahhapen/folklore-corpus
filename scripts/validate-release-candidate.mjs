@@ -12,6 +12,10 @@ import {
   findRightsCoverageGaps,
   RIGHTS_RELEASE_FIELDS,
 } from "./lib/rights-contract-v2.mjs";
+import {
+  findTranslationContractGaps,
+  supportsLanguageSensitiveUse,
+} from "./lib/translation-contract-v1.mjs";
 
 const run = promisify(execFile);
 const repositoryRoot = resolve(
@@ -134,6 +138,7 @@ export async function validateReleaseCandidate({
     sourceItems: await jsonLines(join(root, "source-items.jsonl")),
     representations: await jsonLines(join(root, "representations.jsonl")),
     derivations: await jsonLines(join(root, "derivations.jsonl")),
+    translations: await jsonLines(join(root, "translations.jsonl")),
     rightsAssessments: await jsonLines(join(root, "rights.jsonl")),
   };
   const recordAjv = new Ajv2020({
@@ -255,6 +260,19 @@ export async function validateReleaseCandidate({
       throw new Error(`Broken Derivation closure: ${derivation.id}`);
     }
   }
+  const translationContractGaps = findTranslationContractGaps({
+    translations: files.translations,
+    representations: files.representations,
+    derivations: files.derivations,
+    manifestArtifactIds: artifactIds,
+  });
+  if (translationContractGaps.length > 0) {
+    throw new Error(
+      `Translation contract gaps: ${JSON.stringify(
+        translationContractGaps,
+      )}`,
+    );
+  }
   for (const rights of files.rightsAssessments) {
     const evidenceDigest = rights.evidenceArtifactId.split(
       "fa:artifact:sha256-",
@@ -316,8 +334,21 @@ export async function validateReleaseCandidate({
   }
 
   const gate = await json(join(root, "gate-report.json"));
+  const unreviewedMachineTranslations = files.translations.filter(
+    (translation) =>
+      translation.producerClass === "machine-generated"
+      && translation.reviewStatus === "unreviewed",
+  ).length;
+  const languageSensitiveUseGaps = files.translations.filter(
+    (translation) => !supportsLanguageSensitiveUse(translation),
+  ).length;
   if (
     gate.producerCommit !== manifest.producer.commit
+    || gate.translations.total !== files.translations.length
+    || gate.translations.unreviewedMachineTranslations
+      !== unreviewedMachineTranslations
+    || gate.translations.languageSensitiveUseGaps
+      !== languageSensitiveUseGaps
     || Object.values(gate.releaseRights.useCaseGaps)
       .some((count) => count !== 0)
     || gate.collectionGates.skvr.selectedRecords !== 100
@@ -338,6 +369,7 @@ export async function validateReleaseCandidate({
     documentCount: files.documents.length,
     passageCount: files.passages.length,
     representationCount: files.representations.length,
+    translationCount: files.translations.length,
     artifactCount: manifest.artifacts.length,
     rightsAssessmentCount: files.rightsAssessments.length,
   };
