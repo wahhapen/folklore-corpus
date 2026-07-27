@@ -192,6 +192,10 @@
           "enum": ["copyrighted", "public-domain", "licensed", "permission", "unknown", null]
         },
         "reviewState": { "enum": ["unreviewed", "accepted", "rejected", "superseded"] },
+        "reviewedOn": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
         "evidenceArtifactId": { "$ref": "#/$defs/stableId" }
       },
       "additionalProperties": true

@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
 import { PGlite } from "@electric-sql/pglite";
+import { serializeReviewedOn } from "./lib/release-values.mjs";
 
 const repositoryRoot = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -526,7 +527,7 @@ async function evaluateReleaseRights(database, {
   try {
     const release = await database.query(`
       INSERT INTO folklore.resource (canonical_id, resource_kind)
-      VALUES ('fa:release:corpus-v0.2.0-candidate', 'release')
+      VALUES ('fa:release:corpus-v0.2.1-candidate', 'release')
       RETURNING resource_pk
     `);
     const releasePk = release.rows[0].resource_pk;
@@ -534,7 +535,7 @@ async function evaluateReleaseRights(database, {
       `INSERT INTO folklore.release (
          resource_pk, version, manifest_artifact_resource_pk, published_at,
          metadata
-       ) VALUES ($1, '0.2.0-candidate', (
+       ) VALUES ($1, '0.2.1-candidate', (
          SELECT resource_pk
          FROM folklore.resource
          WHERE canonical_id = $2
@@ -918,7 +919,7 @@ export async function projectV02Release({
         redistributionAllowed: row.redistribution_allowed,
         mlUseAllowed: row.ml_use_allowed,
         jurisdiction: row.jurisdiction,
-        reviewedOn: String(row.reviewed_on).slice(0, 10),
+        reviewedOn: serializeReviewedOn(row.reviewed_on),
         reviewState: row.review_state,
         evidenceArtifactId: row.evidence_artifact_id,
       })),
@@ -972,7 +973,7 @@ export async function projectV02Release({
     );
     const gateReport = {
       schemaVersion: "folklore-corpus-v0.2-gate-report-v1",
-      releaseId: "fa:release:corpus-v0.2.0",
+      releaseId: "fa:release:corpus-v0.2.1",
       producerCommit,
       counts,
       releaseRights: rightsGate,
@@ -1038,7 +1039,7 @@ export async function projectV02Release({
     );
     await writeFile(
       join(releaseRoot, "dataset-card.md"),
-      `# Folklore Corpus v0.2.0\n\n` +
+      `# Folklore Corpus v0.2.1\n\n` +
       `Cumulative evidence release containing the complete v0.1 Gutenberg ` +
       `seed, 100 SKVR I1 records, and 27 LibriVox sections.\n\n` +
       `SKVR is released as official pinned volume XML plus deterministic ` +
@@ -1086,9 +1087,9 @@ export async function projectV02Release({
     );
     const manifest = {
       schemaVersion: "folklore-release-manifest-v1",
-      releaseId: "fa:release:corpus-v0.2.0",
-      version: "0.2.0",
-      publishedAt: "2026-07-25",
+      releaseId: "fa:release:corpus-v0.2.1",
+      version: "0.2.1",
+      publishedAt: "2026-07-27",
       producer: {
         repository: "wahhapen/folklore-corpus",
         commit: producerCommit,
@@ -1143,11 +1144,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const result = await buildV02Release({
     catalogueRoot: resolve(option(
       "--catalogue-root",
-      join(repositoryRoot, "build/catalogue-v0.2.0"),
+      join(repositoryRoot, "build/catalogue-v0.2.1"),
     )),
     releaseRoot: resolve(option(
       "--release-root",
-      join(repositoryRoot, "build/releases/corpus-v0.2.0"),
+      join(repositoryRoot, "build/releases/corpus-v0.2.1"),
     )),
     producerCommit: option(
       "--producer-commit",

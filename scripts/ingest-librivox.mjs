@@ -49,7 +49,7 @@ function argument(name, fallback) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const catalogueRoot = resolve(argument(
     "--catalogue-root",
-    join(repositoryRoot, "build/catalogue-v0.2.0"),
+    join(repositoryRoot, "build/catalogue-v0.2.1"),
   ));
   await mkdir(catalogueRoot, { recursive: true });
   const database = new PGlite(join(catalogueRoot, "pgdata"));

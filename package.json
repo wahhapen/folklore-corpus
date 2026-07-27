@@ -1,6 +1,6 @@
 {
   "name": "folklore-corpus",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "type": "module",
   "engines": {
@@ -17,7 +17,7 @@
     "ingest:librivox": "node scripts/ingest-librivox.mjs",
     "audit:librivox": "node scripts/audit-librivox.mjs",
     "audit:seed": "node scripts/audit-seed-corpus.mjs",
-    "release:build": "node scripts/build-v02-catalogue.mjs --release-root build/releases/corpus-v0.2.0",
+    "release:build": "node scripts/build-v02-catalogue.mjs --release-root build/releases/corpus-v0.2.1",
     "release:pack": "node scripts/release-archive.mjs pack",
     "release:verify": "node scripts/release-archive.mjs verify",
     "validate:release": "node scripts/validate-corpus-release.mjs",
