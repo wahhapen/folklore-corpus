@@ -14,6 +14,7 @@ import { promisify } from "node:util";
 
 import { PGlite } from "@electric-sql/pglite";
 import { serializeReviewedOn } from "./lib/release-values.mjs";
+import { RIGHTS_USE_CASES } from "./lib/rights-contract-v2.mjs";
 
 const repositoryRoot = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -114,7 +115,7 @@ function canonicalJson(value) {
 }
 
 function captureIdentity(descriptor) {
-  return `fa:capture:release-v0.2:sha256-` +
+  return `fa:capture:release-v0.3:sha256-` +
     sha256(Buffer.from(canonicalJson(descriptor)));
 }
 
@@ -407,7 +408,7 @@ function publishDerivations(derivations, captureIdMap) {
     };
     return {
       schemaVersion: "folklore-derivation-v1",
-      id: `fa:derivation:release-v0.2:sha256-` +
+      id: `fa:derivation:release-v0.3:sha256-` +
         sha256(Buffer.from(canonicalJson(content))),
       ...content,
     };
@@ -427,6 +428,11 @@ async function rightsRows(database) {
       assessment.derivatives_allowed,
       assessment.redistribution_allowed,
       assessment.ml_use_allowed,
+      assessment.evidence_use_allowed,
+      assessment.quotation_allowed,
+      assessment.access_private_use_allowed,
+      assessment.ml_evaluation_allowed,
+      assessment.ml_training_allowed,
       assessment.jurisdiction,
       assessment.reviewed_on,
       assessment.review_state,
@@ -495,7 +501,7 @@ async function seedArtifactRows(database) {
     JOIN folklore.resource artifact_resource
       ON artifact_resource.resource_pk = artifact.resource_pk
     WHERE archive_resource.canonical_id = 'fa:archive:project-gutenberg'
-      AND source_item.native_id <> 'rights-review-us-v1'
+      AND source_item.native_id <> 'rights-review-us-v2'
     ORDER BY artifact_id
   `);
   return result.rows;
@@ -527,7 +533,7 @@ async function evaluateReleaseRights(database, {
   try {
     const release = await database.query(`
       INSERT INTO folklore.resource (canonical_id, resource_kind)
-      VALUES ('fa:release:corpus-v0.2.1-candidate', 'release')
+      VALUES ('fa:release:corpus-v0.3.0-candidate', 'release')
       RETURNING resource_pk
     `);
     const releasePk = release.rows[0].resource_pk;
@@ -535,7 +541,7 @@ async function evaluateReleaseRights(database, {
       `INSERT INTO folklore.release (
          resource_pk, version, manifest_artifact_resource_pk, published_at,
          metadata
-       ) VALUES ($1, '0.2.1-candidate', (
+       ) VALUES ($1, '0.3.0-candidate', (
          SELECT resource_pk
          FROM folklore.resource
          WHERE canonical_id = $2
@@ -563,28 +569,29 @@ async function evaluateReleaseRights(database, {
       }
       ordinal += 1;
     }
-    const redistribution = await database.query(
-      `SELECT canonical_id, resource_kind
-       FROM folklore.release_rights_gaps($1, false)`,
-      [releasePk],
+    const gaps = Object.fromEntries(
+      await Promise.all(RIGHTS_USE_CASES.map(async ({ useCase }) => {
+        const result = await database.query(
+          `SELECT canonical_id, resource_kind
+           FROM folklore.release_rights_gaps_v2($1, $2)`,
+          [releasePk, useCase],
+        );
+        return [useCase, result.rows];
+      })),
     );
-    const ml = await database.query(
-      `SELECT canonical_id, resource_kind
-       FROM folklore.release_rights_gaps($1, true)`,
-      [releasePk],
-    );
-    if (redistribution.rows.length || ml.rows.length) {
+    if (Object.values(gaps).some((rows) => rows.length > 0)) {
       throw new Error(
-        `Fail-closed rights gate rejected candidate: ${JSON.stringify({
-          redistribution: redistribution.rows,
-          ml: ml.rows,
-        })}`,
+        `Fail-closed rights gate rejected candidate: ${JSON.stringify(gaps)}`,
       );
     }
     return {
       memberCount: members.size,
-      redistributionGaps: redistribution.rows.length,
-      mlUseGaps: ml.rows.length,
+      useCaseGaps: Object.fromEntries(
+        Object.entries(gaps).map(([useCase, rows]) => [
+          useCase,
+          rows.length,
+        ]),
+      ),
     };
   } finally {
     await database.exec("ROLLBACK");
@@ -788,7 +795,7 @@ async function releaseArtifacts(releaseRoot, paths) {
   return artifacts;
 }
 
-export async function projectV02Release({
+export async function projectRelease({
   database,
   catalogueRoot,
   releaseRoot,
@@ -863,8 +870,12 @@ export async function projectV02Release({
       await writeJsonLines(join(releaseRoot, filename), [...seed, ...extra]);
     }
     await copyFile(
-      join(repositoryRoot, "schemas/corpus-release-v2.schema.json"),
+      join(repositoryRoot, "schemas/corpus-release-v3.schema.json"),
       join(releaseRoot, "schema.json"),
+    );
+    await copyFile(
+      join(repositoryRoot, "schemas/corpus-release-v2.schema.json"),
+      join(releaseRoot, "corpus-release-v2.schema.json"),
     );
     await copyFile(
       join(seedReleaseRoot, "manifest.schema.json"),
@@ -907,7 +918,7 @@ export async function projectV02Release({
     await writeJsonLines(
       join(releaseRoot, "rights.jsonl"),
       rights.map((row) => ({
-        schemaVersion: "folklore-rights-assessment-v1",
+        schemaVersion: "folklore-rights-assessment-v2",
         id: row.id,
         subjectId: row.subject_id,
         statementUri: row.statement_uri,
@@ -918,6 +929,10 @@ export async function projectV02Release({
         derivativesAllowed: row.derivatives_allowed,
         redistributionAllowed: row.redistribution_allowed,
         mlUseAllowed: row.ml_use_allowed,
+        ...Object.fromEntries(RIGHTS_USE_CASES.map(({
+          releaseField,
+          catalogueColumn,
+        }) => [releaseField, row[catalogueColumn]])),
         jurisdiction: row.jurisdiction,
         reviewedOn: serializeReviewedOn(row.reviewed_on),
         reviewState: row.review_state,
@@ -972,8 +987,8 @@ export async function projectV02Release({
       ])),
     );
     const gateReport = {
-      schemaVersion: "folklore-corpus-v0.2-gate-report-v1",
-      releaseId: "fa:release:corpus-v0.2.1",
+      schemaVersion: "folklore-corpus-v0.3-gate-report-v1",
+      releaseId: "fa:release:corpus-v0.3.0",
       producerCommit,
       counts,
       releaseRights: rightsGate,
@@ -992,7 +1007,7 @@ export async function projectV02Release({
           languageGaps: rows.filter((row) =>
             row.archive_id === "fa:archive:skvr" && !row.language_tag
           ).length,
-          rightsGaps: rightsGate.redistributionGaps,
+          rightsGaps: rightsGate.useCaseGaps.redistribution,
         },
         librivox: {
           selectedSections: rows.filter((row) =>
@@ -1025,7 +1040,7 @@ export async function projectV02Release({
               "fa:archive:librivox-celtic-fairy-tales-1837"
             && !row.capture_artifact_id
           ).length,
-          rightsGaps: rightsGate.redistributionGaps,
+          rightsGaps: rightsGate.useCaseGaps.redistribution,
         },
       },
       timing: {
@@ -1039,7 +1054,7 @@ export async function projectV02Release({
     );
     await writeFile(
       join(releaseRoot, "dataset-card.md"),
-      `# Folklore Corpus v0.2.1\n\n` +
+      `# Folklore Corpus v0.3.0\n\n` +
       `Cumulative evidence release containing the complete v0.1 Gutenberg ` +
       `seed, 100 SKVR I1 records, and 27 LibriVox sections.\n\n` +
       `SKVR is released as official pinned volume XML plus deterministic ` +
@@ -1049,13 +1064,20 @@ export async function projectV02Release({
       `SKVR data is CC BY 4.0 with attribution to the Finnish Literature ` +
       `Society SKS. The selected LibriVox recordings and Gutenberg source ` +
       `text are assessed as public domain in the United States. See ` +
-      `rights.jsonl and source-evidence.json for evidence and limitations.\n`,
+      `rights.jsonl and source-evidence.json for evidence and limitations.\n\n` +
+      `Rights Contract v2 records independent tri-state decisions for ` +
+      `evidence use, quotation, redistribution, access/private use, ML ` +
+      `evaluation, and ML training. True means allowed, false means ` +
+      `prohibited, and null means unknown; false and null both fail the ` +
+      `corresponding executable release gate. Historical v0.2 rights are ` +
+      `not promoted automatically and require an explicit v2 review.\n`,
     );
 
     const artifactPaths = [];
     for (const filename of [
       ...CORE_JSONL,
       "schema.json",
+      "corpus-release-v2.schema.json",
       "manifest.schema.json",
       "source-items.jsonl",
       "representations.jsonl",
@@ -1087,8 +1109,8 @@ export async function projectV02Release({
     );
     const manifest = {
       schemaVersion: "folklore-release-manifest-v1",
-      releaseId: "fa:release:corpus-v0.2.1",
-      version: "0.2.1",
+      releaseId: "fa:release:corpus-v0.3.0",
+      version: "0.3.0",
       publishedAt: "2026-07-27",
       producer: {
         repository: "wahhapen/folklore-corpus",
@@ -1096,7 +1118,7 @@ export async function projectV02Release({
       },
       compiler: {
         command: "npm run release:build",
-        parser: "catalogue-v0.2-projection-v1",
+        parser: "catalogue-v0.3-projection-v1",
         node: ">=22.13.0",
       },
       counts,
@@ -1131,24 +1153,24 @@ export async function projectV02Release({
   };
 }
 
-export async function buildV02Release(options) {
+export async function buildRelease(options) {
   const database = new PGlite(join(options.catalogueRoot, "pgdata"));
   try {
-    return await projectV02Release({ ...options, database });
+    return await projectRelease({ ...options, database });
   } finally {
     await database.close();
   }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const result = await buildV02Release({
+  const result = await buildRelease({
     catalogueRoot: resolve(option(
       "--catalogue-root",
-      join(repositoryRoot, "build/catalogue-v0.2.1"),
+      join(repositoryRoot, "build/catalogue-v0.3.0"),
     )),
     releaseRoot: resolve(option(
       "--release-root",
-      join(repositoryRoot, "build/releases/corpus-v0.2.1"),
+      join(repositoryRoot, "build/releases/corpus-v0.3.0"),
     )),
     producerCommit: option(
       "--producer-commit",

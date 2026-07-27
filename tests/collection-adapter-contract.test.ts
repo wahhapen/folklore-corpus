@@ -263,6 +263,12 @@ describe("CollectionAdapter shared contract", () => {
       },
     },
     {
+      name: "explicit governed rights",
+      mutate: (item: any) => {
+        delete item.rights.mlTrainingAllowed;
+      },
+    },
+    {
       name: "JSON checkpoint",
       mutate: (item: any) => {
         item.checkpointAfter = { index: 1n };

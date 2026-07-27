@@ -16,9 +16,9 @@ import {
   putArtifact,
 } from "./build-catalogue.mjs";
 import {
-  projectV02Release,
+  projectRelease,
   verifyProducerCommit,
-} from "./build-v02-release.mjs";
+} from "./project-release.mjs";
 import { ingestLibriVox } from "./ingest-librivox.mjs";
 import { ingestCollection } from "./lib/collection-ingestion.mjs";
 import { ensureResource } from "./lib/catalogue-storage.mjs";
@@ -95,7 +95,7 @@ async function persistSeedRights({ database, artifactRoot }) {
     WHERE canonical_id = 'fa:archive:project-gutenberg'
   `);
   const sourceItemId =
-    "fa:source-item:project-gutenberg:rights-review-us-v1";
+    "fa:source-item:project-gutenberg:rights-review-us-v2";
   const sourceItemPk = await ensureResource(
     database,
     sourceItemId,
@@ -110,7 +110,7 @@ async function persistSeedRights({ database, artifactRoot }) {
     [
       sourceItemPk,
       archive.rows[0].resource_pk,
-      "rights-review-us-v1",
+      "rights-review-us-v2",
       "https://github.com/wahhapen/folklore-corpus/blob/main/data/gutenberg/rights-review-us.json",
       JSON.stringify({
         role: "rights-evidence",
@@ -119,7 +119,7 @@ async function persistSeedRights({ database, artifactRoot }) {
     ],
   );
   const captureId =
-    `fa:capture:project-gutenberg:rights-review-us-v1:sha256-${evidence.digest}`;
+    `fa:capture:project-gutenberg:rights-review-us-v2:sha256-${evidence.digest}`;
   const capturePk = await ensureResource(database, captureId, "capture");
   await database.query(
     `INSERT INTO folklore.capture (
@@ -155,7 +155,7 @@ async function persistSeedRights({ database, artifactRoot }) {
     JOIN folklore.resource resource
       ON resource.resource_pk = artifact.resource_pk
     WHERE archive_resource.canonical_id = 'fa:archive:project-gutenberg'
-      AND source_item.native_id <> 'rights-review-us-v1'
+      AND source_item.native_id <> 'rights-review-us-v2'
     ORDER BY resource.canonical_id
   `);
   const subjects = [
@@ -191,11 +191,13 @@ async function persistSeedRights({ database, artifactRoot }) {
          resource_pk, subject_resource_pk, statement_uri, controlled_status,
          rights_source, attribution_text, commercial_use_allowed,
          derivatives_allowed, redistribution_allowed, ml_use_allowed,
+         evidence_use_allowed, quotation_allowed, access_private_use_allowed,
+         ml_evaluation_allowed, ml_training_allowed,
          jurisdiction, reviewed_on, evidence_artifact_resource_pk,
          review_state, metadata
        ) VALUES (
          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-         'accepted', $14
+         $14, $15, $16, $17, $18, 'accepted', $19
        )
        ON CONFLICT (resource_pk) DO NOTHING`,
       [
@@ -209,6 +211,11 @@ async function persistSeedRights({ database, artifactRoot }) {
         subject.policy.derivativesAllowed,
         subject.policy.redistributionAllowed,
         subject.policy.mlUseAllowed,
+        subject.policy.evidenceUseAllowed,
+        subject.policy.quotationAllowed,
+        subject.policy.accessPrivateUseAllowed,
+        subject.policy.mlEvaluationAllowed,
+        subject.policy.mlTrainingAllowed,
         review.jurisdiction,
         review.reviewedOn,
         evidence.resourcePk,
@@ -226,7 +233,7 @@ async function persistSeedRights({ database, artifactRoot }) {
   };
 }
 
-export async function buildV02Catalogue({
+export async function buildReleaseCandidate({
   outputRoot,
   skvrSourceRoot,
   librivoxSourceRoot,
@@ -281,7 +288,7 @@ export async function buildV02Catalogue({
     const cumulative = await catalogueStats(database);
     const release = releaseRoot == null
       ? null
-      : await projectV02Release({
+      : await projectRelease({
         database,
         catalogueRoot: outputRoot,
         releaseRoot,
@@ -290,8 +297,8 @@ export async function buildV02Catalogue({
       });
     await database.exec("CHECKPOINT");
     return {
-      schemaVersion: "folklore-corpus-v0.2-build-report-v1",
-      version: "0.2.1",
+      schemaVersion: "folklore-corpus-v0.3-build-report-v1",
+      version: "0.3.0",
       durationMilliseconds: Math.round(performance.now() - started),
       sourceItemsCommitted: {
         skvr: skvrItems,
@@ -313,10 +320,10 @@ export async function buildV02Catalogue({
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const report = await buildV02Catalogue({
+  const report = await buildReleaseCandidate({
     outputRoot: resolve(option(
       "--output",
-      join(repositoryRoot, "build/catalogue-v0.2.1"),
+      join(repositoryRoot, "build/catalogue-v0.3.0"),
     )),
     skvrSourceRoot: resolve(option(
       "--skvr-source-root",

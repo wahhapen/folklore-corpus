@@ -1,7 +1,7 @@
 {
-  "schemaVersion": "folklore-rights-review-v1",
-  "reviewId": "project-gutenberg-seed-us-v1",
-  "reviewedOn": "2026-07-25",
+  "schemaVersion": "folklore-rights-review-v2",
+  "reviewId": "project-gutenberg-seed-us-v2",
+  "reviewedOn": "2026-07-27",
   "jurisdiction": "US",
   "reviewState": "accepted",
   "controlledStatus": "public-domain",
@@ -10,7 +10,12 @@
   "attributionText": "Project Gutenberg and the named historical authors, editors, and translators",
   "commercialUseAllowed": true,
   "derivativesAllowed": true,
+  "evidenceUseAllowed": true,
+  "quotationAllowed": true,
   "redistributionAllowed": true,
+  "accessPrivateUseAllowed": true,
+  "mlEvaluationAllowed": true,
+  "mlTrainingAllowed": true,
   "mlUseAllowed": true,
   "scope": "The five exact source artifacts retained from Corpus v0.1.0; the assessment is limited to United States publication.",
   "sources": [
@@ -46,7 +51,12 @@
     "attributionText": "Folklore Corpus contributors",
     "commercialUseAllowed": true,
     "derivativesAllowed": true,
+    "evidenceUseAllowed": true,
+    "quotationAllowed": true,
     "redistributionAllowed": true,
+    "accessPrivateUseAllowed": true,
+    "mlEvaluationAllowed": true,
+    "mlTrainingAllowed": true,
     "mlUseAllowed": true
   },
   "limitations": [

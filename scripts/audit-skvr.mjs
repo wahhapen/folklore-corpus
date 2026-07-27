@@ -96,8 +96,12 @@ export async function auditSkvr(database) {
            AND assessment.review_state = 'accepted'
            AND assessment.statement_uri =
              'https://creativecommons.org/licenses/by/4.0/'
+           AND assessment.evidence_use_allowed IS TRUE
+           AND assessment.quotation_allowed IS TRUE
            AND assessment.redistribution_allowed IS TRUE
-           AND assessment.ml_use_allowed IS TRUE
+           AND assessment.access_private_use_allowed IS TRUE
+           AND assessment.ml_evaluation_allowed IS TRUE
+           AND assessment.ml_training_allowed IS TRUE
        )) AS rights_gaps
   `);
   const audit = result.rows[0];
@@ -131,7 +135,7 @@ function argument(name, fallback) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const catalogueRoot = resolve(argument(
     "--catalogue-root",
-    join(repositoryRoot, "build/catalogue-v0.2.1"),
+    join(repositoryRoot, "build/catalogue-v0.3.0"),
   ));
   const database = new PGlite(join(catalogueRoot, "pgdata"));
   try {

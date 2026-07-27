@@ -1,6 +1,8 @@
 {
-  "reviewId": "skvr-i1-fi-v1",
-  "reviewedOn": "2026-07-25",
+  "schemaVersion": "folklore-rights-review-v2",
+  "reviewId": "skvr-i1-fi-v2",
+  "reviewedOn": "2026-07-27",
+  "reviewState": "accepted",
   "jurisdiction": "FI",
   "license": "CC-BY-4.0",
   "licenseStatement": "This project-authored review record is licensed under Creative Commons Attribution 4.0 International.",
@@ -15,6 +17,11 @@
   "redistributionAllowed": true,
   "commercialUseAllowed": true,
   "derivativesAllowed": true,
+  "evidenceUseAllowed": true,
+  "quotationAllowed": true,
+  "accessPrivateUseAllowed": true,
+  "mlEvaluationAllowed": true,
+  "mlTrainingAllowed": true,
   "mlUseAllowed": true,
   "evidence": [
     {

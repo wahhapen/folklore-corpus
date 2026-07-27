@@ -66,12 +66,12 @@ async function createFixtureSource(root: string) {
       "</metadata>",
     ),
     gutenbergRights: Buffer.from(
-      JSON.stringify({ reviewId: "project-gutenberg-seed-us-v1" }),
+      JSON.stringify({ reviewId: "project-gutenberg-seed-us-v2" }),
     ),
   };
   sourceFiles.jurisdictionReview = Buffer.from(JSON.stringify({
-    reviewId: "librivox-1837-us-v1",
-    reviewedOn: "2026-07-25",
+    reviewId: "librivox-1837-us-v2",
+    reviewedOn: "2026-07-27",
     reviewState: "accepted",
     jurisdiction: "US",
     scope: {
@@ -89,6 +89,11 @@ async function createFixtureSource(root: string) {
     redistributionAllowed: true,
     commercialUseAllowed: true,
     derivativesAllowed: true,
+    evidenceUseAllowed: true,
+    quotationAllowed: true,
+    accessPrivateUseAllowed: true,
+    mlEvaluationAllowed: true,
+    mlTrainingAllowed: true,
     mlUseAllowed: true,
     evidence: [
       {
@@ -168,10 +173,15 @@ async function createFixtureSource(root: string) {
       attributionText: "LibriVox recording of Celtic Fairy Tales",
       commercialUseAllowed: true,
       derivativesAllowed: true,
+      evidenceUseAllowed: true,
+      quotationAllowed: true,
       redistributionAllowed: true,
+      accessPrivateUseAllowed: true,
+      mlEvaluationAllowed: true,
+      mlTrainingAllowed: true,
       mlUseAllowed: true,
       jurisdiction: "US",
-      reviewedOn: "2026-07-25",
+      reviewedOn: "2026-07-27",
       reviewState: "accepted",
     },
   };
