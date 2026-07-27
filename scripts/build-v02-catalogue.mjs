@@ -291,7 +291,7 @@ export async function buildV02Catalogue({
     await database.exec("CHECKPOINT");
     return {
       schemaVersion: "folklore-corpus-v0.2-build-report-v1",
-      version: "0.2.0",
+      version: "0.2.1",
       durationMilliseconds: Math.round(performance.now() - started),
       sourceItemsCommitted: {
         skvr: skvrItems,
@@ -316,7 +316,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const report = await buildV02Catalogue({
     outputRoot: resolve(option(
       "--output",
-      join(repositoryRoot, "build/catalogue-v0.2.0"),
+      join(repositoryRoot, "build/catalogue-v0.2.1"),
     )),
     skvrSourceRoot: resolve(option(
       "--skvr-source-root",

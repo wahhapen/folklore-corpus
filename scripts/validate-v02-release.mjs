@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
 import Ajv2020 from "ajv/dist/2020.js";
+import { isIsoCalendarDate } from "./lib/release-values.mjs";
 
 const run = promisify(execFile);
 const repositoryRoot = resolve(
@@ -69,8 +70,8 @@ export async function validateV02Release({
     );
   }
   if (
-    manifest.version !== "0.2.0"
-    || manifest.releaseId !== "fa:release:corpus-v0.2.0"
+    manifest.version !== "0.2.1"
+    || manifest.releaseId !== "fa:release:corpus-v0.2.1"
   ) {
     throw new Error("Unexpected v0.2 Release identity");
   }
@@ -249,6 +250,8 @@ export async function validateV02Release({
       "fa:artifact:sha256-",
     )[1];
     if (
+      !isIsoCalendarDate(rights.reviewedOn)
+      ||
       rights.reviewState !== "accepted"
       || rights.redistributionAllowed !== true
       || rights.mlUseAllowed !== true
@@ -330,7 +333,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const result = await validateV02Release({
     releaseRoot: resolve(option(
       "--release",
-      join(repositoryRoot, "build/releases/corpus-v0.2.0"),
+      join(repositoryRoot, "build/releases/corpus-v0.2.1"),
     )),
     checkProducer: !process.argv.includes("--skip-producer-check"),
   });

@@ -2,11 +2,17 @@
 
 Deterministic corpus engineering for the Folklore ecosystem.
 
-Corpus v0.2.0 retains the five-edition Project Gutenberg seed and adds 100
+Corpus v0.2.1 retains the five-edition Project Gutenberg seed and adds 100
 official-source SKVR records plus 27 LibriVox sections. The cumulative release
 contains 297 Documents and 3,418 Passages with immutable source bytes,
 content-addressed artifacts, multilingual Representation metadata, typed
 Derivations, and fail-closed rights evidence.
+
+v0.2.1 supersedes v0.2.0 because the earlier release serialized all 520
+rights-review dates using a locale-dependent PGlite `Date` string. The patch
+changes only those values to canonical `YYYY-MM-DD` dates and adds validation;
+the v0.2 record contract and corpus contents are otherwise unchanged. Consumers
+must re-pin the v0.2.1 archive and manifest SHA-256 values after publication.
 
 ## Commands
 
@@ -30,8 +36,8 @@ the temporary output. It does not depend on a previously built release tree.
 
 It acquires and verifies the locked inputs, creates the embedded PostgreSQL
 catalogue and content-addressed Artifact store under
-`build/catalogue-v0.2.0/`, executes collection audits and the transactional
-rights gate, then projects `build/releases/corpus-v0.2.0/` in the same database
+`build/catalogue-v0.2.1/`, executes collection audits and the transactional
+rights gate, then projects `build/releases/corpus-v0.2.1/` in the same database
 process. Pass explicit fresh locations when proving a second clean build:
 
 ```bash
@@ -44,7 +50,7 @@ npm run release:build -- \
 under `dist/`. Verify an archive independently with:
 
 ```bash
-npm run release:verify -- --archive dist/folklore-corpus-v0.2.0.tar.gz
+npm run release:verify -- --archive dist/folklore-corpus-v0.2.1.tar.gz
 ```
 
 The fixed SKVR I1 pilot is acquired and imported through the production
