@@ -250,9 +250,9 @@ jobs:
             )"
             test "$producer" = "$PRODUCER_COMMIT"
             test "$(resolve_tag_commit)" = "$PRODUCER_COMMIT"
-            gh api "${repository_api}/releases/${release_id}" --jq .body \
-              > "${verify_root}/release-notes.md"
-            cmp "$release_notes" "${verify_root}/release-notes.md"
+            test "$(gh api \
+              "${repository_api}/releases/${release_id}" --jq .body)" \
+              = "$(cat "$release_notes")"
           }
 
           release_id="$(
