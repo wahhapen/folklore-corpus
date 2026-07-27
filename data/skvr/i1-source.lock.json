@@ -23,11 +23,11 @@
       "sha256": "210a577d12701e89080f05f37e8a23de2e4d6ae9391782d0d8870269f3f7a14b"
     },
     "rightsReview": {
-      "uri": "urn:folklore-corpus:rights-review:skvr-i1-fi-v1",
+      "uri": "urn:folklore-corpus:rights-review:skvr-i1-fi-v2",
       "sourcePath": "review/rights-review-fi.json",
       "mediaType": "application/json",
-      "byteLength": 1649,
-      "sha256": "27818c9289a9fc581dff6a2a90d7343499d4a60d3e231bbab211dbab371e7f23"
+      "byteLength": 1879,
+      "sha256": "7f22f8dd15d7a37a34cff088f51ddd268e5ba8dfa909e26fcadba3401cc58e16"
     }
   }
 }

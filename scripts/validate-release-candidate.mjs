@@ -8,6 +8,10 @@ import { promisify } from "node:util";
 
 import Ajv2020 from "ajv/dist/2020.js";
 import { isIsoCalendarDate } from "./lib/release-values.mjs";
+import {
+  findRightsCoverageGaps,
+  RIGHTS_RELEASE_FIELDS,
+} from "./lib/rights-contract-v2.mjs";
 
 const run = promisify(execFile);
 const repositoryRoot = resolve(
@@ -53,7 +57,7 @@ function requireCount(manifest, key, records) {
   }
 }
 
-export async function validateV02Release({
+export async function validateReleaseCandidate({
   releaseRoot,
   checkProducer = true,
 }) {
@@ -61,8 +65,12 @@ export async function validateV02Release({
   const manifest = await json(join(root, "manifest.json"));
   const manifestSchema = await json(join(root, "manifest.schema.json"));
   const recordSchema = await json(join(root, "schema.json"));
+  const previousRecordSchema = await json(
+    join(root, "corpus-release-v2.schema.json"),
+  );
   const sourceEvidence = await json(join(root, "source-evidence.json"));
   const ajv = new Ajv2020({ allErrors: true, strict: true });
+  ajv.addSchema(previousRecordSchema);
   const validateManifest = ajv.compile(manifestSchema);
   if (!validateManifest(manifest)) {
     throw new Error(
@@ -70,10 +78,10 @@ export async function validateV02Release({
     );
   }
   if (
-    manifest.version !== "0.2.1"
-    || manifest.releaseId !== "fa:release:corpus-v0.2.1"
+    manifest.version !== "0.3.0"
+    || manifest.releaseId !== "fa:release:corpus-v0.3.0"
   ) {
-    throw new Error("Unexpected v0.2 Release identity");
+    throw new Error("Unexpected v0.3 Release identity");
   }
   if (checkProducer) {
     const { stdout: head } = await run("git", ["rev-parse", "HEAD"], {
@@ -128,10 +136,12 @@ export async function validateV02Release({
     derivations: await jsonLines(join(root, "derivations.jsonl")),
     rightsAssessments: await jsonLines(join(root, "rights.jsonl")),
   };
-  const validateRecord = new Ajv2020({
+  const recordAjv = new Ajv2020({
     allErrors: true,
     strict: false,
-  }).compile(recordSchema);
+  });
+  recordAjv.addSchema(previousRecordSchema);
+  const validateRecord = recordAjv.compile(recordSchema);
   for (const records of Object.values(files)) {
     for (const record of records) {
       if (!validateRecord(record)) {
@@ -251,14 +261,18 @@ export async function validateV02Release({
     )[1];
     if (
       !isIsoCalendarDate(rights.reviewedOn)
-      ||
-      rights.reviewState !== "accepted"
-      || rights.redistributionAllowed !== true
-      || rights.mlUseAllowed !== true
       || !manifestDigests.has(evidenceDigest)
     ) {
-      throw new Error(`Fail-closed Rights mismatch: ${rights.id}`);
+      throw new Error(`Rights evidence mismatch: ${rights.id}`);
     }
+  }
+  const rightsCoverageGaps = findRightsCoverageGaps(files);
+  if (rightsCoverageGaps.length > 0) {
+    throw new Error(
+      `Fail-closed Rights coverage gaps: ${JSON.stringify(
+        rightsCoverageGaps,
+      )}`,
+    );
   }
   const internetArchiveMetadataDigest =
     sourceEvidence.librivox?.sources?.internetArchiveMetadata?.sha256;
@@ -304,8 +318,8 @@ export async function validateV02Release({
   const gate = await json(join(root, "gate-report.json"));
   if (
     gate.producerCommit !== manifest.producer.commit
-    || gate.releaseRights.redistributionGaps !== 0
-    || gate.releaseRights.mlUseGaps !== 0
+    || Object.values(gate.releaseRights.useCaseGaps)
+      .some((count) => count !== 0)
     || gate.collectionGates.skvr.selectedRecords !== 100
     || gate.collectionGates.librivox.selectedSections !== 27
     || gate.collectionGates.librivox.totalDurationSeconds !== 23262
@@ -330,10 +344,10 @@ export async function validateV02Release({
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const result = await validateV02Release({
+  const result = await validateReleaseCandidate({
     releaseRoot: resolve(option(
       "--release",
-      join(repositoryRoot, "build/releases/corpus-v0.2.1"),
+      join(repositoryRoot, "build/releases/corpus-v0.3.0"),
     )),
     checkProducer: !process.argv.includes("--skip-producer-check"),
   });

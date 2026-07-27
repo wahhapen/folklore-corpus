@@ -63,9 +63,9 @@ async function verifySource(path, source) {
 
 async function copyCommittedEvidence({ source, destination }) {
   const committedEvidence = source.uri
-    === "urn:folklore:rights-review:librivox-1837-us-v1"
+    === "urn:folklore:rights-review:librivox-1837-us-v2"
     ? join(repositoryRoot, "data/librivox/rights-review-us.json")
-    : source.uri === "urn:folklore:rights-review:gutenberg-seed-us-v1"
+    : source.uri === "urn:folklore:rights-review:gutenberg-seed-us-v2"
     ? join(repositoryRoot, "data/gutenberg/rights-review-us.json")
     : null;
   if (committedEvidence == null) {

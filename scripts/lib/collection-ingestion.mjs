@@ -17,6 +17,7 @@ import {
   registerArtifact,
   sha256,
 } from "./catalogue-storage.mjs";
+import { RIGHTS_RELEASE_FIELDS } from "./rights-contract-v2.mjs";
 
 const KEY_PATTERN = /^[a-z0-9][a-z0-9._-]*$/;
 const SELECTOR_FIELDS = {
@@ -334,6 +335,16 @@ function validateItem(item, captured, materialized) {
       "item.rights needs a statement URI or controlled status",
     );
   }
+  for (const field of RIGHTS_RELEASE_FIELDS) {
+    if (
+      !Object.hasOwn(rights, field)
+      || (rights[field] !== null && typeof rights[field] !== "boolean")
+    ) {
+      throw new IngestValidationError(
+        `item.rights.${field} must be true, false, or null`,
+      );
+    }
+  }
 }
 
 async function tableExists(database, table) {
@@ -590,9 +601,12 @@ async function persistRights(database, subject, rights, evidence) {
        resource_pk, subject_resource_pk, statement_uri, controlled_status,
        rights_source, attribution_text, commercial_use_allowed,
        derivatives_allowed, redistribution_allowed, ml_use_allowed,
+       evidence_use_allowed, quotation_allowed, access_private_use_allowed,
+       ml_evaluation_allowed, ml_training_allowed,
        jurisdiction, reviewed_on, evidence_artifact_resource_pk, review_state
      ) VALUES (
-       $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+       $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+       $15, $16, $17, $18, $19
      )
      ON CONFLICT (resource_pk) DO NOTHING`,
     [
@@ -606,6 +620,11 @@ async function persistRights(database, subject, rights, evidence) {
       rights.derivativesAllowed ?? null,
       rights.redistributionAllowed ?? null,
       rights.mlUseAllowed ?? null,
+      rights.evidenceUseAllowed,
+      rights.quotationAllowed,
+      rights.accessPrivateUseAllowed,
+      rights.mlEvaluationAllowed,
+      rights.mlTrainingAllowed,
       rights.jurisdiction,
       rights.reviewedOn,
       evidence.artifactPk,

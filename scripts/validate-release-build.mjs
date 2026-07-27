@@ -4,14 +4,14 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 
-import { buildV02Catalogue } from "./build-v02-catalogue.mjs";
-import { validateV02Release } from "./validate-v02-release.mjs";
+import { buildReleaseCandidate } from "./build-release-candidate.mjs";
+import { validateReleaseCandidate } from "./validate-release-candidate.mjs";
 
 const run = promisify(execFile);
 const repositoryRoot = resolve(new URL("..", import.meta.url).pathname);
 
 const validationRoot = await mkdtemp(
-  join(tmpdir(), "folklore-corpus-v02-validate-"),
+  join(tmpdir(), "folklore-corpus-v03-validate-"),
 );
 
 try {
@@ -20,14 +20,14 @@ try {
     encoding: "utf8",
   });
   const producerCommit = stdout.trim();
-  const build = await buildV02Catalogue({
+  const build = await buildReleaseCandidate({
     outputRoot: join(validationRoot, "catalogue"),
     skvrSourceRoot: join(repositoryRoot, "source-cache/skvr-i1"),
     librivoxSourceRoot: join(repositoryRoot, "source-cache/librivox"),
     releaseRoot: join(validationRoot, "release"),
     producerCommit,
   });
-  const validation = await validateV02Release({
+  const validation = await validateReleaseCandidate({
     releaseRoot: join(validationRoot, "release"),
   });
   process.stdout.write(`${JSON.stringify({ build, validation }, null, 2)}\n`);

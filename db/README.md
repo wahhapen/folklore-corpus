@@ -14,6 +14,9 @@ script and dialect metadata to Representations, passage-level BCP 47 overrides,
 and typed translation/transliteration/normalization/transcription Derivations.
 `migrations/0004_ingestion_runs.sql` records resumable CollectionAdapter runs,
 their durable checkpoints, and committed external item keys.
+`migrations/0005_rights_contract_v2.sql` adds independent tri-state decisions
+for evidence use, quotation, redistribution, access/private use, ML
+evaluation, and ML training, plus a use-specific fail-closed Release gate.
 `scripts/build-catalogue.mjs` imports the pinned v0.1 Release into a persistent
 embedded PostgreSQL catalogue, materializes normalized Witness
 Representations, and stores captured and derived bytes by SHA-256.

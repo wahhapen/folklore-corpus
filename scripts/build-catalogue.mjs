@@ -143,6 +143,21 @@ export async function applyCatalogueMigrations(database) {
       ),
     );
   }
+  if (
+    !(await columnExists(
+      database,
+      "folklore",
+      "rights_assessment",
+      "ml_training_allowed",
+    ))
+  ) {
+    await database.exec(
+      await readFile(
+        join(repositoryRoot, "db/migrations/0005_rights_contract_v2.sql"),
+        "utf8",
+      ),
+    );
+  }
 }
 
 export async function importRelease({

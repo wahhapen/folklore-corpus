@@ -55,7 +55,10 @@ function fixtureVolume({ omit }: { omit?: string } = {}) {
   );
 }
 
-function fixtureLock(volume: Buffer) {
+function fixtureLock(
+  volume: Buffer,
+  reviewOverride: Record<string, unknown> = {},
+) {
   const source = (
     uri: string,
     sourcePath: string,
@@ -69,7 +72,21 @@ function fixtureLock(volume: Buffer) {
     sha256: sha256(bytes),
   });
   const readme = Buffer.from("SKVR data is CC BY 4.0");
-  const review = Buffer.from('{"reviewState":"accepted"}');
+  const review = Buffer.from(JSON.stringify({
+    schemaVersion: "folklore-rights-review-v2",
+    reviewId: "skvr-i1-fi-v2",
+    reviewedOn: "2026-07-27",
+    reviewState: "accepted",
+    jurisdiction: "FI",
+    assessment: "cc-by-4.0",
+    evidenceUseAllowed: true,
+    quotationAllowed: true,
+    redistributionAllowed: true,
+    accessPrivateUseAllowed: true,
+    mlEvaluationAllowed: true,
+    mlTrainingAllowed: true,
+    ...reviewOverride,
+  }));
   return {
     lock: {
       schemaVersion: 1,
@@ -244,6 +261,36 @@ describe("pinned SKVR volume source", () => {
       }
     };
     await expect(run()).rejects.toThrow("missing pilot IDs");
+    const commits = await database.query(
+      "SELECT count(*)::integer AS count FROM folklore.ingest_item_commit",
+    );
+    expect(commits.rows).toEqual([{ count: 0 }]);
+  });
+
+  it("rejects a pinned rights review that disagrees with Rights Contract v2", async () => {
+    temporaryDirectory = await mkdtemp(join(tmpdir(), "skvr-rights-bad-"));
+    database = new PGlite();
+    const fixture = fixtureLock(fixtureVolume(), {
+      reviewState: "rejected",
+    });
+    const run = async () => {
+      for await (const _ of ingestCollection({
+        database,
+        artifactRoot: join(temporaryDirectory, "artifacts"),
+        adapter: createSkvrI1VolumeAdapter(fixture.lock),
+        captureTransport: async ({ uri }) => ({
+          bytes: fixture.sources.get(uri),
+          responseMetadata: { status: 200 },
+        }),
+        request: { pilot: "I1-base-1-100" },
+      })) {
+        // Consume the ingestion stream.
+      }
+    };
+
+    await expect(run()).rejects.toThrow(
+      "SKVR Rights Contract v2 review is incomplete",
+    );
     const commits = await database.query(
       "SELECT count(*)::integer AS count FROM folklore.ingest_item_commit",
     );

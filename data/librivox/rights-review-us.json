@@ -1,6 +1,7 @@
 {
-  "reviewId": "librivox-1837-us-v1",
-  "reviewedOn": "2026-07-25",
+  "schemaVersion": "folklore-rights-review-v2",
+  "reviewId": "librivox-1837-us-v2",
+  "reviewedOn": "2026-07-27",
   "reviewState": "accepted",
   "jurisdiction": "US",
   "license": "CC0-1.0",
@@ -20,6 +21,11 @@
   "redistributionAllowed": true,
   "commercialUseAllowed": true,
   "derivativesAllowed": true,
+  "evidenceUseAllowed": true,
+  "quotationAllowed": true,
+  "accessPrivateUseAllowed": true,
+  "mlEvaluationAllowed": true,
+  "mlTrainingAllowed": true,
   "mlUseAllowed": true,
   "evidence": [
     {
@@ -29,8 +35,8 @@
     },
     {
       "role": "source-text-jurisdiction",
-      "uri": "urn:folklore:rights-review:gutenberg-seed-us-v1",
-      "capturedSha256": "3a4b38835e4e20b15dfe1cb9b507cbaac5f8a2724b27c374ee3f755422a85af8"
+      "uri": "urn:folklore:rights-review:gutenberg-seed-us-v2",
+      "capturedSha256": "9f3a56970a9879e8138b24f6004abf2e7aa6154751738476a576153ce4980ed7"
     }
   ],
   "basis": [

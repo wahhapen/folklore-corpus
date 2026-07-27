@@ -6,6 +6,7 @@ import { XMLParser, XMLValidator } from "fast-xml-parser";
 
 import { IngestValidationError } from
   "../lib/collection-ingestion.mjs";
+import { RIGHTS_RELEASE_FIELDS } from "../lib/rights-contract-v2.mjs";
 
 export const SKVR_I1_PILOT_IDS = Object.freeze([
   ...manifest.electronicIds,
@@ -299,7 +300,24 @@ function parseSkvrTei(xml, expectedId) {
   };
 }
 
-function rights(evidenceCaptureKey) {
+function assertRightsReview(review) {
+  if (
+    review?.schemaVersion !== "folklore-rights-review-v2"
+    || review?.reviewId !== "skvr-i1-fi-v2"
+    || review?.reviewedOn !== "2026-07-27"
+    || review?.reviewState !== "accepted"
+    || review?.jurisdiction !== "FI"
+    || review?.assessment !== "cc-by-4.0"
+    || RIGHTS_RELEASE_FIELDS.some((field) => review[field] !== true)
+  ) {
+    throw new IngestValidationError(
+      "SKVR Rights Contract v2 review is incomplete",
+    );
+  }
+}
+
+function rights(evidenceCaptureKey, review) {
+  if (review) assertRightsReview(review);
   return {
     evidenceCaptureKey,
     statementUri: "https://creativecommons.org/licenses/by/4.0/",
@@ -309,11 +327,16 @@ function rights(evidenceCaptureKey) {
       "Suomalaisen Kirjallisuuden Seura (SKS), Suomen Kansan Vanhat Runot (SKVR)",
     commercialUseAllowed: true,
     derivativesAllowed: true,
+    evidenceUseAllowed: true,
+    quotationAllowed: true,
     redistributionAllowed: true,
+    accessPrivateUseAllowed: true,
+    mlEvaluationAllowed: true,
+    mlTrainingAllowed: true,
     mlUseAllowed: true,
     jurisdiction: "FI",
-    reviewedOn: "2026-07-25",
-    reviewState: "accepted",
+    reviewedOn: review?.reviewedOn ?? "2026-07-27",
+    reviewState: review?.reviewState ?? "accepted",
   };
 }
 
@@ -477,6 +500,15 @@ export function createSkvrI1VolumeAdapter(lock, { lockSha256 } = {}) {
         role: "rights-evidence",
         request: reviewRequest,
       });
+      let rightsReview;
+      try {
+        rightsReview = JSON.parse(await context.readText(rightsEvidence));
+      } catch {
+        throw new IngestValidationError(
+          "SKVR Rights Contract v2 review is not valid JSON",
+        );
+      }
+      assertRightsReview(rightsReview);
       const entries = xmlItems(await context.readText(volume));
       const byId = new Map(entries.map((entry) => [entry.electronicId, entry]));
       const missing = SKVR_I1_PILOT_IDS.filter((id) => !byId.has(id));
@@ -609,7 +641,7 @@ export function createSkvrI1VolumeAdapter(lock, { lockSha256 } = {}) {
               },
             ],
           }],
-          rights: rights(rightsEvidence.key),
+          rights: rights(rightsEvidence.key, rightsReview),
         };
       }
     },

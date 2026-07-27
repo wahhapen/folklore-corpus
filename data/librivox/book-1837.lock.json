@@ -26,18 +26,18 @@
       "sha256": "962adefe6e71cbdcac2c69a55ee227806afa2aa95dc1df2f9938d86b83e221e0"
     },
     "gutenbergRights": {
-      "uri": "urn:folklore:rights-review:gutenberg-seed-us-v1",
+      "uri": "urn:folklore:rights-review:gutenberg-seed-us-v2",
       "path": "gutenberg-rights-review-us.json",
       "mediaType": "application/json",
-      "byteLength": 2208,
-      "sha256": "3a4b38835e4e20b15dfe1cb9b507cbaac5f8a2724b27c374ee3f755422a85af8"
+      "byteLength": 2524,
+      "sha256": "9f3a56970a9879e8138b24f6004abf2e7aa6154751738476a576153ce4980ed7"
     },
     "jurisdictionReview": {
-      "uri": "urn:folklore:rights-review:librivox-1837-us-v1",
+      "uri": "urn:folklore:rights-review:librivox-1837-us-v2",
       "path": "rights-review-us.json",
       "mediaType": "application/json",
-      "byteLength": 1565,
-      "sha256": "b133c1eb1e2fc3452051baae8ed465d65607be62a11739aa1d52c24da92b5e6d"
+      "byteLength": 1766,
+      "sha256": "74bfeb1cd6d560ae2ac6cfa515c3a2eec0f0b69cab5c6cdaf95be3a92f51cf2a"
     }
   },
   "sections": [
@@ -508,10 +508,15 @@
     "attributionText": "LibriVox recording of Celtic Fairy Tales by Joseph Jacobs, read by LibriVox volunteers",
     "commercialUseAllowed": true,
     "derivativesAllowed": true,
+    "evidenceUseAllowed": true,
+    "quotationAllowed": true,
     "redistributionAllowed": true,
+    "accessPrivateUseAllowed": true,
+    "mlEvaluationAllowed": true,
+    "mlTrainingAllowed": true,
     "mlUseAllowed": true,
     "jurisdiction": "US",
-    "reviewedOn": "2026-07-25",
+    "reviewedOn": "2026-07-27",
     "reviewState": "accepted"
   }
 }

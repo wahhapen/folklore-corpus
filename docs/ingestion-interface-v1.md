@@ -213,6 +213,8 @@ An `IngestItem` must provide:
 - captured inputs for every derived Artifact Representation;
 - captured rights evidence covering every emitted Artifact and
   Representation;
+- explicit tri-state Rights Contract v2 decisions for evidence use, quotation,
+  redistribution, access/private use, ML evaluation, and ML training;
 - a serializable `checkpointAfter`.
 
 Validation occurs before the item transaction. The engine, not the adapter,

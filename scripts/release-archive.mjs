@@ -17,7 +17,7 @@ const command = process.argv[2];
 if (command === "pack") {
   const releaseRoot = option(
     "--release",
-    "build/releases/corpus-v0.2.1",
+    "build/releases/corpus-v0.3.0",
   );
   const outputRoot = option("--output", "dist");
   const result = await packRelease({ releaseRoot, outputRoot });

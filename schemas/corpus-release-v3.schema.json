@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://folklore-atlas.example/schemas/corpus-release-v3.schema.json",
+  "title": "Folklore Corpus Release v3 records",
+  "oneOf": [
+    { "$ref": "corpus-release-v2.schema.json#/$defs/capture" },
+    { "$ref": "corpus-release-v2.schema.json#/$defs/edition" },
+    { "$ref": "corpus-release-v2.schema.json#/$defs/document" },
+    { "$ref": "corpus-release-v2.schema.json#/$defs/witness" },
+    { "$ref": "corpus-release-v2.schema.json#/$defs/passage" },
+    { "$ref": "corpus-release-v2.schema.json#/$defs/lineage" },
+    { "$ref": "corpus-release-v2.schema.json#/$defs/split" },
+    { "$ref": "corpus-release-v2.schema.json#/$defs/alias" },
+    { "$ref": "corpus-release-v2.schema.json#/$defs/sourceItem" },
+    { "$ref": "corpus-release-v2.schema.json#/$defs/representation" },
+    { "$ref": "corpus-release-v2.schema.json#/$defs/derivation" },
+    { "$ref": "#/$defs/rights" }
+  ],
+  "$defs": {
+    "stableId": {
+      "type": "string",
+      "pattern": "^fa:[a-z-]+:"
+    },
+    "rightsDecision": {
+      "type": ["boolean", "null"]
+    },
+    "rights": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "id",
+        "subjectId",
+        "rightsSource",
+        "attributionText",
+        "evidenceUseAllowed",
+        "quotationAllowed",
+        "redistributionAllowed",
+        "accessPrivateUseAllowed",
+        "mlEvaluationAllowed",
+        "mlTrainingAllowed",
+        "jurisdiction",
+        "reviewedOn",
+        "reviewState",
+        "evidenceArtifactId"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "folklore-rights-assessment-v2" },
+        "id": { "$ref": "#/$defs/stableId" },
+        "subjectId": { "$ref": "#/$defs/stableId" },
+        "controlledStatus": {
+          "type": ["string", "null"],
+          "enum": [
+            "copyrighted",
+            "public-domain",
+            "licensed",
+            "permission",
+            "unknown",
+            null
+          ]
+        },
+        "evidenceUseAllowed": { "$ref": "#/$defs/rightsDecision" },
+        "quotationAllowed": { "$ref": "#/$defs/rightsDecision" },
+        "redistributionAllowed": { "$ref": "#/$defs/rightsDecision" },
+        "accessPrivateUseAllowed": { "$ref": "#/$defs/rightsDecision" },
+        "mlEvaluationAllowed": { "$ref": "#/$defs/rightsDecision" },
+        "mlTrainingAllowed": { "$ref": "#/$defs/rightsDecision" },
+        "reviewState": {
+          "enum": ["unreviewed", "accepted", "rejected", "superseded"]
+        },
+        "reviewedOn": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "evidenceArtifactId": { "$ref": "#/$defs/stableId" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

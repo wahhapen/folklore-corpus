@@ -1,6 +1,6 @@
 {
   "name": "folklore-corpus",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build:corpus": "node scripts/build-folklore-corpus.mjs",
-    "db:build": "node scripts/build-v02-catalogue.mjs",
+    "db:build": "node scripts/build-release-candidate.mjs",
     "db:build:seed": "node scripts/build-catalogue.mjs",
     "source:skvr": "node scripts/acquire-skvr.mjs",
     "db:ingest:skvr": "node scripts/ingest-skvr.mjs",
@@ -17,14 +17,14 @@
     "ingest:librivox": "node scripts/ingest-librivox.mjs",
     "audit:librivox": "node scripts/audit-librivox.mjs",
     "audit:seed": "node scripts/audit-seed-corpus.mjs",
-    "release:build": "node scripts/build-v02-catalogue.mjs --release-root build/releases/corpus-v0.2.1",
+    "release:build": "node scripts/build-release-candidate.mjs --release-root build/releases/corpus-v0.3.0",
     "release:pack": "node scripts/release-archive.mjs pack",
     "release:verify": "node scripts/release-archive.mjs verify",
     "validate:release": "node scripts/validate-corpus-release.mjs",
-    "validate:v0.2": "node scripts/validate-v02-release.mjs",
-    "validate:v0.2:fresh": "node scripts/validate-v02-build.mjs",
+    "validate:v0.3": "node scripts/validate-release-candidate.mjs",
+    "validate:v0.3:fresh": "node scripts/validate-release-build.mjs",
     "test": "vitest run",
-    "validate": "npm run build:corpus && npm run audit:seed && npm run validate:release && npm run validate:v0.2:fresh && npm test"
+    "validate": "npm run build:corpus && npm run audit:seed && npm run validate:release && npm run validate:v0.3:fresh && npm test"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.4",

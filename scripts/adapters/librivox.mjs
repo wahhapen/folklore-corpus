@@ -1,4 +1,5 @@
 import { IngestValidationError } from "../lib/collection-ingestion.mjs";
+import { RIGHTS_RELEASE_FIELDS } from "../lib/rights-contract-v2.mjs";
 import { XMLParser } from "fast-xml-parser";
 
 const EXPECTED_IDS = Array.from(
@@ -148,13 +149,13 @@ function assertRightsReview(lock, review) {
     ]),
   );
   const permissions = [
-    "redistributionAllowed",
+    ...RIGHTS_RELEASE_FIELDS,
     "commercialUseAllowed",
     "derivativesAllowed",
     "mlUseAllowed",
   ];
   if (
-    review?.reviewId !== "librivox-1837-us-v1"
+    review?.reviewId !== "librivox-1837-us-v2"
     || review?.reviewState !== rights.reviewState
     || review?.reviewedOn !== rights.reviewedOn
     || review?.jurisdiction !== rights.jurisdiction
