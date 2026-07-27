@@ -274,6 +274,14 @@ Witness and Passage identities but never share a Representation identity.
    rebuildable Projections.
 10. Secrets and authentication headers never enter Capture metadata.
 
+Translation output is not inferred from a language tag or producer. An adapter
+that emits a translation must also emit a source Representation, a
+`translation` Derivation linking source input to translated output, and an
+explicit Translation Contract v1 record. Review status is supplied
+independently from producer class. Until the ingestion draft interface grows a
+typed translation field, adapters must not smuggle this information into
+free-form metadata.
+
 ## Failure model
 
 | Class | Examples | Result |

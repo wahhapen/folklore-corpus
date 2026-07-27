@@ -15,6 +15,9 @@ import { promisify } from "node:util";
 import { PGlite } from "@electric-sql/pglite";
 import { serializeReviewedOn } from "./lib/release-values.mjs";
 import { RIGHTS_USE_CASES } from "./lib/rights-contract-v2.mjs";
+import {
+  supportsLanguageSensitiveUse,
+} from "./lib/translation-contract-v1.mjs";
 
 const repositoryRoot = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -450,6 +453,55 @@ async function rightsRows(database) {
   return result.rows;
 }
 
+async function translationRows(database) {
+  const result = await database.query(`
+    SELECT
+      translation_resource.canonical_id AS translation_representation_id,
+      source_resource.canonical_id AS source_representation_id,
+      translation.producer_class,
+      translation.review_status,
+      reviewer_resource.canonical_id AS reviewed_by_id,
+      evidence_resource.canonical_id AS review_evidence_artifact_id,
+      translation.metadata
+    FROM folklore.translation translation
+    JOIN folklore.resource translation_resource
+      ON translation_resource.resource_pk =
+        translation.translation_representation_resource_pk
+    JOIN folklore.resource source_resource
+      ON source_resource.resource_pk =
+        translation.source_representation_resource_pk
+    LEFT JOIN folklore.resource reviewer_resource
+      ON reviewer_resource.resource_pk =
+        translation.reviewed_by_resource_pk
+    LEFT JOIN folklore.resource evidence_resource
+      ON evidence_resource.resource_pk =
+        translation.review_evidence_artifact_resource_pk
+    ORDER BY translation_representation_id
+  `);
+  return result.rows;
+}
+
+function publishTranslations(translations) {
+  return translations.map((row) => {
+    const content = {
+      translationRepresentationId: row.translation_representation_id,
+      sourceRepresentationId: row.source_representation_id,
+      producerClass: row.producer_class,
+      reviewStatus: row.review_status,
+      reviewedById: row.reviewed_by_id,
+      reviewEvidenceArtifactId: row.review_evidence_artifact_id,
+      metadata: row.metadata,
+    };
+    return {
+      schemaVersion: "folklore-translation-v1",
+      id: `fa:translation:sha256-${sha256(
+        Buffer.from(canonicalJson(content)),
+      )}`,
+      ...content,
+    };
+  });
+}
+
 async function rightsEvidenceRows(database) {
   const result = await database.query(`
     SELECT DISTINCT
@@ -822,6 +874,9 @@ export async function projectRelease({
     }
     const derivations = await derivationRows(database);
     const rights = await rightsRows(database);
+    const translations = publishTranslations(
+      await translationRows(database),
+    );
     const evidenceRows = await rightsEvidenceRows(database);
     const seedArtifacts = await seedArtifactRows(database);
     const rightsGate = await evaluateReleaseRights(database, {
@@ -916,6 +971,10 @@ export async function projectRelease({
       publishedDerivations,
     );
     await writeJsonLines(
+      join(releaseRoot, "translations.jsonl"),
+      translations,
+    );
+    await writeJsonLines(
       join(releaseRoot, "rights.jsonl"),
       rights.map((row) => ({
         schemaVersion: "folklore-rights-assessment-v2",
@@ -980,6 +1039,7 @@ export async function projectRelease({
         ["sourceItems", "source-items.jsonl"],
         ["representations", "representations.jsonl"],
         ["derivations", "derivations.jsonl"],
+        ["translations", "translations.jsonl"],
         ["rightsAssessments", "rights.jsonl"],
       ].map(async ([key, filename]) => [
         key,
@@ -992,6 +1052,16 @@ export async function projectRelease({
       producerCommit,
       counts,
       releaseRights: rightsGate,
+      translations: {
+        total: translations.length,
+        unreviewedMachineTranslations: translations.filter((translation) =>
+          translation.producerClass === "machine-generated"
+          && translation.reviewStatus === "unreviewed"
+        ).length,
+        languageSensitiveUseGaps: translations.filter((translation) =>
+          !supportsLanguageSensitiveUse(translation)
+        ).length,
+      },
       collectionGates: {
         skvr: {
           selectedRecords: rows.filter((row) =>
@@ -1070,7 +1140,13 @@ export async function projectRelease({
       `evaluation, and ML training. True means allowed, false means ` +
       `prohibited, and null means unknown; false and null both fail the ` +
       `corresponding executable release gate. Historical v0.2 rights are ` +
-      `not promoted automatically and require an explicit v2 review.\n`,
+      `not promoted automatically and require an explicit v2 review.\n\n` +
+      `Translations are separate provenance records linking each translated ` +
+      `Representation to an original-language Representation shipped beside ` +
+      `it. Producer class and review status are independent. Unreviewed, ` +
+      `rejected, or superseded translations must not support language-` +
+      `sensitive claims; consumers can inspect translations.jsonl and the ` +
+      `machine-readable gate report instead of inferring trust from origin.\n`,
     );
 
     const artifactPaths = [];
@@ -1082,6 +1158,7 @@ export async function projectRelease({
       "source-items.jsonl",
       "representations.jsonl",
       "derivations.jsonl",
+      "translations.jsonl",
       "rights.jsonl",
       "source-evidence.json",
       "gate-report.json",

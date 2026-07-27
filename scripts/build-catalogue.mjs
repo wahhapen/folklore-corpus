@@ -158,6 +158,14 @@ export async function applyCatalogueMigrations(database) {
       ),
     );
   }
+  if (!(await tableExists(database, "folklore", "translation"))) {
+    await database.exec(
+      await readFile(
+        join(repositoryRoot, "db/migrations/0006_translation_contract.sql"),
+        "utf8",
+      ),
+    );
+  }
 }
 
 export async function importRelease({

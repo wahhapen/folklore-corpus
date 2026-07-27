@@ -14,6 +14,7 @@
     { "$ref": "corpus-release-v2.schema.json#/$defs/sourceItem" },
     { "$ref": "corpus-release-v2.schema.json#/$defs/representation" },
     { "$ref": "corpus-release-v2.schema.json#/$defs/derivation" },
+    { "$ref": "#/$defs/translation" },
     { "$ref": "#/$defs/rights" }
   ],
   "$defs": {
@@ -23,6 +24,72 @@
     },
     "rightsDecision": {
       "type": ["boolean", "null"]
+    },
+    "translation": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "id",
+        "translationRepresentationId",
+        "sourceRepresentationId",
+        "producerClass",
+        "reviewStatus",
+        "reviewedById",
+        "reviewEvidenceArtifactId"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "folklore-translation-v1" },
+        "id": { "$ref": "#/$defs/stableId" },
+        "translationRepresentationId": { "$ref": "#/$defs/stableId" },
+        "sourceRepresentationId": { "$ref": "#/$defs/stableId" },
+        "producerClass": {
+          "enum": [
+            "source-published",
+            "expert-produced",
+            "user-produced",
+            "machine-generated"
+          ]
+        },
+        "reviewStatus": {
+          "enum": ["unreviewed", "accepted", "rejected", "superseded"]
+        },
+        "reviewedById": {
+          "oneOf": [
+            { "$ref": "#/$defs/stableId" },
+            { "type": "null" }
+          ]
+        },
+        "reviewEvidenceArtifactId": {
+          "oneOf": [
+            { "$ref": "#/$defs/stableId" },
+            { "type": "null" }
+          ]
+        },
+        "metadata": { "type": "object" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "reviewStatus": { "const": "unreviewed" }
+            },
+            "required": ["reviewStatus"]
+          },
+          "then": {
+            "properties": {
+              "reviewedById": { "type": "null" },
+              "reviewEvidenceArtifactId": { "type": "null" }
+            }
+          },
+          "else": {
+            "properties": {
+              "reviewedById": { "$ref": "#/$defs/stableId" },
+              "reviewEvidenceArtifactId": { "$ref": "#/$defs/stableId" }
+            }
+          }
+        }
+      ],
+      "additionalProperties": true
     },
     "rights": {
       "type": "object",

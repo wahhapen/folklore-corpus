@@ -100,5 +100,9 @@ The first database and ingestion design is now recorded in:
   — durable adapter runs, checkpoints, and committed-item identities
 - [`db/migrations/0005_rights_contract_v2.sql`](db/migrations/0005_rights_contract_v2.sql)
   — independent use decisions and the v0.3 fail-closed rights gate
+- [`db/migrations/0006_translation_contract.sql`](db/migrations/0006_translation_contract.sql)
+  — source-linked translation provenance and independent review status
+- [`docs/translation-contract-v1.md`](docs/translation-contract-v1.md)
+  — producer vocabulary, review semantics, and language-sensitive-use policy
 - [`VISION.md`](VISION.md) — long-term multilingual research direction,
   deliberately outside the executable roadmap

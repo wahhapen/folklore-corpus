@@ -70,6 +70,7 @@ globally unique canonical ID for interchange.
 | `derivation` | Method, version, parameters, environment, and run identity |
 | `derivation_input` | Ordered immutable inputs |
 | `derivation_output` | Ordered immutable outputs |
+| `translation` | Source-to-translation Representation link, producer class, and independent review status |
 | `claim` | Attributed, versioned assertion with predicate and confidence |
 | `claim_object` | Resource target or typed literal value |
 | `claim_evidence` | Supporting or contradicting resources and selectors |
