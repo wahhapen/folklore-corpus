@@ -1,21 +1,28 @@
-name: Publish Corpus v0.2.1
+name: Publish Corpus v0.3.0
 
 on:
+  pull_request:
+    paths:
+      - .github/workflows/publish-corpus-v03.yml
   push:
     branches:
       - main
     paths:
-      - .github/workflows/publish-corpus-v02.yml
+      - .github/workflows/publish-corpus-v03.yml
 
 permissions: {}
 
+env:
+  PRODUCER_COMMIT: 2721a94f5e318c6026a1b78ea97ca3514fe1ab10
+  EXPECTED_ARCHIVE_SHA256: 39e559ec8a384158770ca01f6e687399a6aa497db80c7eb861342ce4ad998c4a
+  EXPECTED_MANIFEST_SHA256: 56322778649b863623a512fcaf64591bad68db0eb1f3edf56aec4d51df286380
+
 concurrency:
-  group: publish-corpus-v0.2.1
+  group: publish-corpus-v0.3.0
   cancel-in-progress: false
 
 jobs:
   build:
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
@@ -24,6 +31,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+          ref: ${{ env.PRODUCER_COMMIT }}
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
@@ -35,23 +43,26 @@ jobs:
 
       - name: Build and verify release
         env:
-          FOLKLORE_PRODUCER_COMMIT: ${{ github.sha }}
+          FOLKLORE_PRODUCER_COMMIT: ${{ env.PRODUCER_COMMIT }}
         run: |
+          test "$(git rev-parse HEAD)" = "$PRODUCER_COMMIT"
           npm run validate
           npm run release:build
           npm run release:pack
           npm run release:verify -- \
-            --archive dist/folklore-corpus-v0.2.1.tar.gz
+            --archive dist/folklore-corpus-v0.3.0.tar.gz
           archive_sha="$(
             cut -d ' ' -f 1 \
-              dist/folklore-corpus-v0.2.1.tar.gz.sha256
+              dist/folklore-corpus-v0.3.0.tar.gz.sha256
           )"
+          test "$archive_sha" = "$EXPECTED_ARCHIVE_SHA256"
           manifest_sha="$(
-            sha256sum build/releases/corpus-v0.2.1/manifest.json |
+            sha256sum build/releases/corpus-v0.3.0/manifest.json |
               cut -d ' ' -f 1
           )"
+          test "$manifest_sha" = "$EXPECTED_MANIFEST_SHA256"
           jq -n \
-            --arg producer "$GITHUB_SHA" \
+            --arg producer "$PRODUCER_COMMIT" \
             --arg archiveSha256 "$archive_sha" \
             --arg manifestSha256 "$manifest_sha" \
             '{
@@ -63,17 +74,17 @@ jobs:
       - name: Stage verified bundle
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: corpus-v0.2.1-release-bundle
+          name: corpus-v0.3.0-release-bundle
           retention-days: 1
           if-no-files-found: error
           path: |
-            dist/folklore-corpus-v0.2.1.tar.gz
-            dist/folklore-corpus-v0.2.1.tar.gz.sha256
-            build/releases/corpus-v0.2.1/manifest.json
+            dist/folklore-corpus-v0.3.0.tar.gz
+            dist/folklore-corpus-v0.3.0.tar.gz.sha256
+            build/releases/corpus-v0.3.0/manifest.json
             bundle-metadata.json
 
   publish:
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -83,29 +94,31 @@ jobs:
       - name: Download verified bundle
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: corpus-v0.2.1-release-bundle
+          name: corpus-v0.3.0-release-bundle
           path: bundle
 
       - name: Verify staged checksums
         working-directory: bundle
         run: |
-          test "$(jq -r .producerCommit bundle-metadata.json)" = "$GITHUB_SHA"
+          test "$(jq -r .producerCommit bundle-metadata.json)" = "$PRODUCER_COMMIT"
           archive_sha="$(jq -r .archiveSha256 bundle-metadata.json)"
           manifest_sha="$(jq -r .manifestSha256 bundle-metadata.json)"
+          test "$archive_sha" = "$EXPECTED_ARCHIVE_SHA256"
           test "$archive_sha" = "$(
             cut -d ' ' -f 1 \
-              dist/folklore-corpus-v0.2.1.tar.gz.sha256
+              dist/folklore-corpus-v0.3.0.tar.gz.sha256
           )"
           test "$archive_sha" = "$(
-            sha256sum dist/folklore-corpus-v0.2.1.tar.gz |
+            sha256sum dist/folklore-corpus-v0.3.0.tar.gz |
               cut -d ' ' -f 1
           )"
           test "$manifest_sha" = "$(
-            sha256sum build/releases/corpus-v0.2.1/manifest.json |
+            sha256sum build/releases/corpus-v0.3.0/manifest.json |
               cut -d ' ' -f 1
           )"
+          test "$manifest_sha" = "$EXPECTED_MANIFEST_SHA256"
           test "$(jq -r .producer.commit \
-            build/releases/corpus-v0.2.1/manifest.json)" = "$GITHUB_SHA"
+            build/releases/corpus-v0.3.0/manifest.json)" = "$PRODUCER_COMMIT"
 
       - name: Publish or verify checksum-pinned release
         env:
@@ -113,23 +126,25 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          tag="corpus-v0.2.1"
+          tag="corpus-v0.3.0"
           repository_api="repos/${GITHUB_REPOSITORY}"
-          archive="bundle/dist/folklore-corpus-v0.2.1.tar.gz"
+          archive="bundle/dist/folklore-corpus-v0.3.0.tar.gz"
           checksum="${archive}.sha256"
-          manifest="bundle/build/releases/corpus-v0.2.1/manifest.json"
+          manifest="bundle/build/releases/corpus-v0.3.0/manifest.json"
           archive_sha="$(cut -d ' ' -f 1 "$checksum")"
           manifest_sha="$(sha256sum "$manifest" | cut -d ' ' -f 1)"
           release_notes="$(mktemp)"
           {
-            echo "Supersedes v0.2.0 by repairing all 520 rights-review dates to canonical YYYY-MM-DD values."
+            echo "Supersedes v0.2.1 with the cumulative, rights- and translation-aware Corpus v0.3 contract."
             echo
-            echo "Corpus contents and the v0.2 record contract are otherwise unchanged."
+            echo "This release adds Rights Contract v2 with six independent fail-closed decisions: quotation, access/private use, ML evaluation, ML training, redistribution, and derivative use. It also records translation as an explicit provenance relationship between released Representations, including source Representation, producer class, and review status."
+            echo
+            echo "The bounded educational corpus contains 297 Documents and 3,418 Passages from the five-edition Project Gutenberg seed, 100 official-source SKVR records, and 27 LibriVox sections. It is not comprehensive or broadly representative. Unaccepted translations cannot silently support language-sensitive use."
             echo
             echo "- Archive SHA-256: \`${archive_sha}\`"
             echo "- Manifest SHA-256: \`${manifest_sha}\`"
             echo
-            echo "Consumer repinning: update the Search and ML Lab release locks to \`corpus-v0.2.1\`, \`folklore-corpus-v0.2.1.tar.gz\`, \`fa:release:corpus-v0.2.1\`, and the two digests above; then run each consumer's corpus verification command."
+            echo "Consumer repinning: update release locks to \`corpus-v0.3.0\`, \`folklore-corpus-v0.3.0.tar.gz\`, \`fa:release:corpus-v0.3.0\`, producer commit \`${PRODUCER_COMMIT}\`, and the two digests above; then run the consumer's complete Corpus verification command."
           } > "$release_notes"
 
           resolve_tag_commit() {
@@ -175,8 +190,8 @@ jobs:
           }
 
           verify_published_release() {
-            local release_id="$1" archive_asset archive_digest
-            local manifest_asset manifest_digest producer verify_root
+            local release_id="$1" archive_asset archive_digest asset_id
+            local manifest_asset manifest_digest name producer verify_root
             verify_root="$(mktemp -d)"
             test "$(
               gh api "${repository_api}/releases/${release_id}/assets" \
@@ -184,7 +199,7 @@ jobs:
             )" = "3"
             archive_asset="$(
               gh api "${repository_api}/releases/${release_id}/assets" \
-                --jq '.[] | select(.name == "folklore-corpus-v0.2.1.tar.gz")'
+                --jq '.[] | select(.name == "folklore-corpus-v0.3.0.tar.gz")'
             )"
             manifest_asset="$(
               gh api "${repository_api}/releases/${release_id}/assets" \
@@ -195,7 +210,8 @@ jobs:
             archive_digest="$(jq -r .digest <<<"$archive_asset")"
             manifest_digest="$(jq -r .digest <<<"$manifest_asset")"
             for name in \
-              folklore-corpus-v0.2.1.tar.gz.sha256 \
+              folklore-corpus-v0.3.0.tar.gz \
+              folklore-corpus-v0.3.0.tar.gz.sha256 \
               manifest.json; do
               asset_id="$(
                 gh api "${repository_api}/releases/${release_id}/assets" \
@@ -207,17 +223,36 @@ jobs:
                 "${repository_api}/releases/assets/${asset_id}" \
                 > "${verify_root}/${name}"
             done
+            cmp "$archive" \
+              "${verify_root}/folklore-corpus-v0.3.0.tar.gz"
+            cmp "$checksum" \
+              "${verify_root}/folklore-corpus-v0.3.0.tar.gz.sha256"
+            cmp "$manifest" "${verify_root}/manifest.json"
+            test "$(sha256sum \
+              "${verify_root}/folklore-corpus-v0.3.0.tar.gz" |
+                cut -d ' ' -f 1)" = "$EXPECTED_ARCHIVE_SHA256"
+            test "$(cut -d ' ' -f 1 \
+              "${verify_root}/folklore-corpus-v0.3.0.tar.gz.sha256"
+            )" = "$EXPECTED_ARCHIVE_SHA256"
+            test "$archive_digest" = "sha256:${EXPECTED_ARCHIVE_SHA256}"
             test "$archive_digest" = "sha256:$(
               cut -d ' ' -f 1 \
-                "${verify_root}/folklore-corpus-v0.2.1.tar.gz.sha256"
+                "${verify_root}/folklore-corpus-v0.3.0.tar.gz.sha256"
             )"
+            test "$(sha256sum "${verify_root}/manifest.json" |
+              cut -d ' ' -f 1)" = "$EXPECTED_MANIFEST_SHA256"
+            test "$manifest_digest" = "sha256:${EXPECTED_MANIFEST_SHA256}"
             test "$manifest_digest" = "sha256:$(
               sha256sum "${verify_root}/manifest.json" | cut -d ' ' -f 1
             )"
             producer="$(
               jq -r .producer.commit "${verify_root}/manifest.json"
             )"
-            test "$(resolve_tag_commit)" = "$producer"
+            test "$producer" = "$PRODUCER_COMMIT"
+            test "$(resolve_tag_commit)" = "$PRODUCER_COMMIT"
+            gh api "${repository_api}/releases/${release_id}" --jq .body \
+              > "${verify_root}/release-notes.md"
+            cmp "$release_notes" "${verify_root}/release-notes.md"
           }
 
           release_id="$(
@@ -236,7 +271,7 @@ jobs:
           if gh api "${repository_api}/git/ref/tags/${tag}" \
             >/dev/null 2>&1; then
             tag_exists=true
-            test "$(resolve_tag_commit)" = "$GITHUB_SHA"
+            test "$(resolve_tag_commit)" = "$PRODUCER_COMMIT"
           fi
 
           if test -n "$release_id"; then
@@ -248,12 +283,12 @@ jobs:
               gh api \
                 -X PATCH \
                 "${repository_api}/releases/${release_id}" \
-                -f target_commitish="$GITHUB_SHA" \
+                -f target_commitish="$PRODUCER_COMMIT" \
                 >/dev/null
               test "$(
                 gh api "${repository_api}/releases/${release_id}" \
                   --jq .target_commitish
-              )" = "$GITHUB_SHA"
+              )" = "$PRODUCER_COMMIT"
             fi
             if verify_assets "$release_id"; then
               gh release edit "$tag" \
@@ -270,14 +305,14 @@ jobs:
               gh release create "$tag" \
                 --verify-tag \
                 --draft \
-                --title "Folklore Corpus v0.2.1" \
+                --title "Folklore Corpus v0.3.0" \
                 --notes-file "$release_notes" \
                 "$archive" "$checksum" "$manifest"
             else
               gh release create "$tag" \
-                --target "$GITHUB_SHA" \
+                --target "$PRODUCER_COMMIT" \
                 --draft \
-                --title "Folklore Corpus v0.2.1" \
+                --title "Folklore Corpus v0.3.0" \
                 --notes-file "$release_notes" \
                 "$archive" "$checksum" "$manifest"
             fi
@@ -290,13 +325,13 @@ jobs:
               test "$(
                 gh api "${repository_api}/releases/${release_id}" \
                   --jq .target_commitish
-              )" = "$GITHUB_SHA"
+              )" = "$PRODUCER_COMMIT"
             fi
             verify_assets "$release_id"
             gh release edit "$tag" --draft=false --latest
           fi
 
-          test "$(resolve_tag_commit)" = "$GITHUB_SHA"
+          test "$(resolve_tag_commit)" = "$PRODUCER_COMMIT"
           release="$(
             gh api "${repository_api}/releases/${release_id}"
           )"
