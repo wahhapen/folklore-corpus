@@ -9,8 +9,9 @@ import { promisify } from "node:util";
 import Ajv2020 from "ajv/dist/2020.js";
 import { isIsoCalendarDate } from "./lib/release-values.mjs";
 import {
-  findRightsCoverageGaps,
-  RIGHTS_RELEASE_FIELDS,
+  assertReleasePublicationRights,
+  findRightsCoverageGapsByUseCase,
+  RIGHTS_USE_CASES,
 } from "./lib/rights-contract-v2.mjs";
 import {
   findTranslationContractGaps,
@@ -284,14 +285,8 @@ export async function validateReleaseCandidate({
       throw new Error(`Rights evidence mismatch: ${rights.id}`);
     }
   }
-  const rightsCoverageGaps = findRightsCoverageGaps(files);
-  if (rightsCoverageGaps.length > 0) {
-    throw new Error(
-      `Fail-closed Rights coverage gaps: ${JSON.stringify(
-        rightsCoverageGaps,
-      )}`,
-    );
-  }
+  const rightsCoverageGaps = findRightsCoverageGapsByUseCase(files);
+  assertReleasePublicationRights(rightsCoverageGaps);
   const internetArchiveMetadataDigest =
     sourceEvidence.librivox?.sources?.internetArchiveMetadata?.sha256;
   const internetArchiveMetadataArtifactId =
@@ -349,8 +344,10 @@ export async function validateReleaseCandidate({
       !== unreviewedMachineTranslations
     || gate.translations.languageSensitiveUseGaps
       !== languageSensitiveUseGaps
-    || Object.values(gate.releaseRights.useCaseGaps)
-      .some((count) => count !== 0)
+    || RIGHTS_USE_CASES.some(({ useCase }) =>
+      gate.releaseRights.useCaseGaps[useCase]
+        !== rightsCoverageGaps[useCase].length
+    )
     || gate.collectionGates.skvr.selectedRecords !== 100
     || gate.collectionGates.librivox.selectedSections !== 27
     || gate.collectionGates.librivox.totalDurationSeconds !== 23262

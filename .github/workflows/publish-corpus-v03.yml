@@ -91,6 +91,10 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
       - name: Download verified bundle
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
@@ -133,11 +137,14 @@ jobs:
           manifest="bundle/build/releases/corpus-v0.3.0/manifest.json"
           archive_sha="$(cut -d ' ' -f 1 "$checksum")"
           manifest_sha="$(sha256sum "$manifest" | cut -d ' ' -f 1)"
+          rights_contract_note="$(
+            node scripts/release-notes.mjs
+          )"
           release_notes="$(mktemp)"
           {
             echo "Supersedes v0.2.1 with the cumulative, rights- and translation-aware Corpus v0.3 contract."
             echo
-            echo "This release adds Rights Contract v2 with six independent fail-closed decisions: quotation, access/private use, ML evaluation, ML training, redistribution, and derivative use. It also records translation as an explicit provenance relationship between released Representations, including source Representation, producer class, and review status."
+            echo "$rights_contract_note"
             echo
             echo "The bounded educational corpus contains 297 Documents and 3,418 Passages from the five-edition Project Gutenberg seed, 100 official-source SKVR records, and 27 LibriVox sections. It is not comprehensive or broadly representative. Unaccepted translations cannot silently support language-sensitive use."
             echo
@@ -189,7 +196,7 @@ jobs:
             done
           }
 
-          verify_published_release() {
+          verify_published_release_assets_and_identity() {
             local release_id="$1" archive_asset archive_digest asset_id
             local manifest_asset manifest_digest name producer verify_root
             verify_root="$(mktemp -d)"
@@ -250,6 +257,11 @@ jobs:
             )"
             test "$producer" = "$PRODUCER_COMMIT"
             test "$(resolve_tag_commit)" = "$PRODUCER_COMMIT"
+          }
+
+          verify_published_release() {
+            local release_id="$1"
+            verify_published_release_assets_and_identity "$release_id"
             test "$(gh api \
               "${repository_api}/releases/${release_id}" --jq .body)" \
               = "$(cat "$release_notes")"
@@ -262,6 +274,9 @@ jobs:
           if test -n "$release_id" && test "$(
             gh api "${repository_api}/releases/${release_id}" --jq .draft
           )" = "false"; then
+            verify_published_release_assets_and_identity "$release_id"
+            gh release edit "$tag" \
+              --notes-file "$release_notes" --latest
             verify_published_release "$release_id"
             gh api "${repository_api}/releases/${release_id}" --jq .html_url
             exit 0

@@ -14,7 +14,10 @@ import { promisify } from "node:util";
 
 import { PGlite } from "@electric-sql/pglite";
 import { serializeReviewedOn } from "./lib/release-values.mjs";
-import { RIGHTS_USE_CASES } from "./lib/rights-contract-v2.mjs";
+import {
+  assertReleasePublicationRights,
+  RIGHTS_USE_CASES,
+} from "./lib/rights-contract-v2.mjs";
 import {
   supportsLanguageSensitiveUse,
 } from "./lib/translation-contract-v1.mjs";
@@ -581,6 +584,16 @@ async function evaluateReleaseRights(database, {
   for (const row of evidenceRows) add(row.artifact_id, "rights-evidence");
   for (const row of rights) add(row.id, "rights-assessment");
 
+  return evaluateReleaseMemberRights(database, {
+    members,
+    manifestArtifactId: seedArtifacts[0].artifact_id,
+  });
+}
+
+export async function evaluateReleaseMemberRights(database, {
+  members,
+  manifestArtifactId,
+}) {
   await database.exec("BEGIN");
   try {
     const release = await database.query(`
@@ -600,7 +613,7 @@ async function evaluateReleaseRights(database, {
        ), '2026-07-25T00:00:00Z', $3)`,
       [
         releasePk,
-        seedArtifacts[0].artifact_id,
+        manifestArtifactId,
         JSON.stringify({ purpose: "transactional-rights-gate" }),
       ],
     );
@@ -631,11 +644,7 @@ async function evaluateReleaseRights(database, {
         return [useCase, result.rows];
       })),
     );
-    if (Object.values(gaps).some((rows) => rows.length > 0)) {
-      throw new Error(
-        `Fail-closed rights gate rejected candidate: ${JSON.stringify(gaps)}`,
-      );
-    }
+    assertReleasePublicationRights(gaps);
     return {
       memberCount: members.size,
       useCaseGaps: Object.fromEntries(

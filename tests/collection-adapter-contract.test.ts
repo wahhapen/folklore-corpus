@@ -14,6 +14,8 @@ import {
   getIngestRun,
   ingestCollection,
 } from "../scripts/lib/collection-ingestion.mjs";
+import { evaluateReleaseMemberRights } from
+  "../scripts/project-release.mjs";
 
 const SKVR_TEI = Buffer.from(`<?xml version="1.0"?>
 <TEI xml:lang="fi"><text><body>
@@ -109,6 +111,7 @@ describe("CollectionAdapter shared contract", () => {
         selectorType: "LineSelector",
         representations: 1,
         passages: 1,
+        mlTrainingAllowed: false,
       },
     },
     {
@@ -120,6 +123,7 @@ describe("CollectionAdapter shared contract", () => {
         selectorType: "AudioTimeSelector",
         representations: 2,
         passages: 2,
+        mlTrainingAllowed: true,
       },
     },
   ]) {
@@ -184,6 +188,49 @@ describe("CollectionAdapter shared contract", () => {
         WHERE review_state = 'accepted'
       `);
       expect(Number(rights.rows[0].count)).toBeGreaterThanOrEqual(2);
+      const governedRights = await database.query<{
+        ml_training_allowed: boolean;
+      }>(`
+        SELECT ml_training_allowed
+        FROM folklore.rights_assessment
+        WHERE review_state = 'accepted'
+          AND ml_training_allowed IS NOT NULL
+      `);
+      expect(governedRights.rows).toContainEqual({
+        ml_training_allowed: example.expected.mlTrainingAllowed,
+      });
+      if (!example.expected.mlTrainingAllowed) {
+        const releaseResources = await database.query<{
+          canonical_id: string;
+          resource_kind: string;
+        }>(`
+          SELECT canonical_id, resource_kind
+          FROM folklore.resource
+          WHERE resource_kind IN (
+            'artifact',
+            'representation',
+            'rights-assessment'
+          )
+          ORDER BY canonical_id
+        `);
+        const members = new Map(
+          releaseResources.rows.map(({ canonical_id, resource_kind }) => [
+            canonical_id,
+            resource_kind,
+          ]),
+        );
+        const manifestArtifactId = releaseResources.rows.find(
+          ({ resource_kind }) => resource_kind === "artifact",
+        )!.canonical_id;
+        const gate = await evaluateReleaseMemberRights(database, {
+          members,
+          manifestArtifactId,
+        });
+
+        expect(gate.useCaseGaps["evidence-use"]).toBe(0);
+        expect(gate.useCaseGaps.quotation).toBe(0);
+        expect(gate.useCaseGaps["ml-training"]).toBeGreaterThan(0);
+      }
 
       const sourceTrace = await database.query<{
         witness_count: number;
