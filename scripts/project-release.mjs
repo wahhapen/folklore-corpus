@@ -584,6 +584,16 @@ async function evaluateReleaseRights(database, {
   for (const row of evidenceRows) add(row.artifact_id, "rights-evidence");
   for (const row of rights) add(row.id, "rights-assessment");
 
+  return evaluateReleaseMemberRights(database, {
+    members,
+    manifestArtifactId: seedArtifacts[0].artifact_id,
+  });
+}
+
+export async function evaluateReleaseMemberRights(database, {
+  members,
+  manifestArtifactId,
+}) {
   await database.exec("BEGIN");
   try {
     const release = await database.query(`
@@ -603,7 +613,7 @@ async function evaluateReleaseRights(database, {
        ), '2026-07-25T00:00:00Z', $3)`,
       [
         releasePk,
-        seedArtifacts[0].artifact_id,
+        manifestArtifactId,
         JSON.stringify({ purpose: "transactional-rights-gate" }),
       ],
     );
