@@ -1,31 +1,37 @@
 export const RIGHTS_USE_CASES = Object.freeze([
   Object.freeze({
     useCase: "evidence-use",
+    releaseNoteName: "evidence use",
     releaseField: "evidenceUseAllowed",
     catalogueColumn: "evidence_use_allowed",
   }),
   Object.freeze({
     useCase: "quotation",
+    releaseNoteName: "quotation",
     releaseField: "quotationAllowed",
     catalogueColumn: "quotation_allowed",
   }),
   Object.freeze({
     useCase: "redistribution",
+    releaseNoteName: "redistribution",
     releaseField: "redistributionAllowed",
     catalogueColumn: "redistribution_allowed",
   }),
   Object.freeze({
     useCase: "access-private-use",
+    releaseNoteName: "access/private use",
     releaseField: "accessPrivateUseAllowed",
     catalogueColumn: "access_private_use_allowed",
   }),
   Object.freeze({
     useCase: "ml-evaluation",
+    releaseNoteName: "ML evaluation",
     releaseField: "mlEvaluationAllowed",
     catalogueColumn: "ml_evaluation_allowed",
   }),
   Object.freeze({
     useCase: "ml-training",
+    releaseNoteName: "ML training",
     releaseField: "mlTrainingAllowed",
     catalogueColumn: "ml_training_allowed",
   }),
