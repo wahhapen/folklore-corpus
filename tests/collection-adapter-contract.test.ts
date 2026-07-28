@@ -109,6 +109,7 @@ describe("CollectionAdapter shared contract", () => {
         selectorType: "LineSelector",
         representations: 1,
         passages: 1,
+        mlTrainingAllowed: false,
       },
     },
     {
@@ -120,6 +121,7 @@ describe("CollectionAdapter shared contract", () => {
         selectorType: "AudioTimeSelector",
         representations: 2,
         passages: 2,
+        mlTrainingAllowed: true,
       },
     },
   ]) {
@@ -184,6 +186,17 @@ describe("CollectionAdapter shared contract", () => {
         WHERE review_state = 'accepted'
       `);
       expect(Number(rights.rows[0].count)).toBeGreaterThanOrEqual(2);
+      const governedRights = await database.query<{
+        ml_training_allowed: boolean;
+      }>(`
+        SELECT ml_training_allowed
+        FROM folklore.rights_assessment
+        WHERE review_state = 'accepted'
+          AND ml_training_allowed IS NOT NULL
+      `);
+      expect(governedRights.rows).toContainEqual({
+        ml_training_allowed: example.expected.mlTrainingAllowed,
+      });
 
       const sourceTrace = await database.query<{
         witness_count: number;

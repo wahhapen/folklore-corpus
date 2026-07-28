@@ -14,7 +14,10 @@ import { promisify } from "node:util";
 
 import { PGlite } from "@electric-sql/pglite";
 import { serializeReviewedOn } from "./lib/release-values.mjs";
-import { RIGHTS_USE_CASES } from "./lib/rights-contract-v2.mjs";
+import {
+  assertReleasePublicationRights,
+  RIGHTS_USE_CASES,
+} from "./lib/rights-contract-v2.mjs";
 import {
   supportsLanguageSensitiveUse,
 } from "./lib/translation-contract-v1.mjs";
@@ -631,11 +634,7 @@ async function evaluateReleaseRights(database, {
         return [useCase, result.rows];
       })),
     );
-    if (Object.values(gaps).some((rows) => rows.length > 0)) {
-      throw new Error(
-        `Fail-closed rights gate rejected candidate: ${JSON.stringify(gaps)}`,
-      );
-    }
+    assertReleasePublicationRights(gaps);
     return {
       memberCount: members.size,
       useCaseGaps: Object.fromEntries(

@@ -22,6 +22,12 @@ gate. A resource is covered only when an accepted assessment explicitly allows
 the requested use and both the assessment and its evidence Artifact are
 members of the candidate Release.
 
+Publication requires complete `evidence-use` coverage. Gaps for the other five
+use cases are recorded as explicit restrictions rather than treated as missing
+data: a source may remain citable evidence even when quotation,
+redistribution, private access, ML evaluation, or ML training is prohibited.
+Every downstream use still fails closed against its own requested-use gate.
+
 ## Migrating v0.2 records
 
 Migration `0005_rights_contract_v2.sql` adds the five new catalogue columns as

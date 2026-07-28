@@ -12,7 +12,7 @@ function rights(evidenceCaptureKey) {
     redistributionAllowed: true,
     accessPrivateUseAllowed: true,
     mlEvaluationAllowed: true,
-    mlTrainingAllowed: true,
+    mlTrainingAllowed: false,
     mlUseAllowed: true,
     jurisdiction: "FI",
     reviewedOn: "2026-07-25",
