@@ -196,9 +196,8 @@ jobs:
             done
           }
 
-          verify_published_release() {
+          verify_published_release_assets_and_identity() {
             local release_id="$1" archive_asset archive_digest asset_id
-            local body_check="${2:-enabled}"
             local manifest_asset manifest_digest name producer verify_root
             verify_root="$(mktemp -d)"
             test "$(
@@ -258,11 +257,14 @@ jobs:
             )"
             test "$producer" = "$PRODUCER_COMMIT"
             test "$(resolve_tag_commit)" = "$PRODUCER_COMMIT"
-            if test "$body_check" = "enabled"; then
-              test "$(gh api \
-                "${repository_api}/releases/${release_id}" --jq .body)" \
-                = "$(cat "$release_notes")"
-            fi
+          }
+
+          verify_published_release() {
+            local release_id="$1"
+            verify_published_release_assets_and_identity "$release_id"
+            test "$(gh api \
+              "${repository_api}/releases/${release_id}" --jq .body)" \
+              = "$(cat "$release_notes")"
           }
 
           release_id="$(
@@ -272,7 +274,7 @@ jobs:
           if test -n "$release_id" && test "$(
             gh api "${repository_api}/releases/${release_id}" --jq .draft
           )" = "false"; then
-            verify_published_release "$release_id" body-check-disabled
+            verify_published_release_assets_and_identity "$release_id"
             gh release edit "$tag" \
               --notes-file "$release_notes" --latest
             verify_published_release "$release_id"
