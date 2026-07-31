@@ -1,7 +1,11 @@
 # Repository Split Handoff
 
-Status: ready for approval; not executed
+Status: superseded; retained as historical context
 Prepared: 2026-07-24
+Superseded: 2026-07-31
+
+The three-repository split described below was completed. This file is not an
+active plan.
 
 ## Decision
 

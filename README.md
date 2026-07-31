@@ -2,14 +2,15 @@
 
 Deterministic corpus engineering for the Folklore ecosystem.
 
-The current branch builds the Corpus v0.3.0 release candidate. It retains the
+The current branch builds the published Corpus v0.3.0 release, which GitHub
+marks as Latest. It retains the
 five-edition Project Gutenberg seed, 100 official-source SKVR records, and 27
 LibriVox sections while adding Rights Contract v2. The cumulative release
 contains 297 Documents and 3,418 Passages with immutable source bytes,
 content-addressed artifacts, multilingual Representation metadata, typed
 Derivations, and fail-closed rights evidence.
 
-The published v0.2.1 release remains immutable. v0.3.0 requires explicit,
+The prior v0.2.1 release remains immutable. v0.3.0 requires explicit,
 independent decisions for evidence use, quotation, redistribution,
 access/private use, ML evaluation, and ML training. See
 [`docs/rights-contract-v2.md`](docs/rights-contract-v2.md) for the vocabulary
